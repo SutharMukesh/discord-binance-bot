@@ -1,0 +1,15 @@
+# We want to set this to avoid any accidental leakage of our token(s).
+*.token.*
+*.token
+
+# We don't want to push our IDE configuration folder(s) to our repo.
+.vscode/
+
+# We don't want to push any precompiled Python files to be pushed either.
+module/__pycache__/
+module/*.pyc
+
+# Do not modify config.unmodified.json, instead copy it and name it "config.json" so that we don't accidentally push your config to your Github.
+config.json
+
+.history
