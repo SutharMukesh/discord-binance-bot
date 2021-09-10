@@ -164,6 +164,36 @@ class DiscordScraper(object):
         # Return the response.
         return request.sendRequest(url)
 
+    def getLastMessageGuild(self, guild, channel):
+        """
+        Use the official Discord API to retrieve the last publicly viewable message in a channel.
+        :param guild: The ID for the guild that we're wanting to scrape from.
+        :param channel: The ID for the channel that we're wanting to scrape from.
+        """
+
+        # Generate a valid URL to the documented API function for retrieving channel messages (we don't care about the 100 message limit this time).
+        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=1'.format(
+            self.apiversion, channel)
+
+        # Update the HTTP request headers to set the referer to the current guild channel URL.
+        self.headers.update(
+            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(guild, channel)})
+
+        try:
+            # Execute the network query to retrieve the JSON data.
+            response = self.requestData(lastmessage, self.headers)
+
+            # If we returned nothing then return nothing.
+            if response is None:
+                return None
+
+            # Read the response data and convert it into a dictionary object.
+            data = loads(response.read())
+
+            return data
+        except Exception as ex:
+            print(ex)
+
     def filterMessageFromAdmins(self, message):
         """
         return the same message, if its from admin or else it returns None
