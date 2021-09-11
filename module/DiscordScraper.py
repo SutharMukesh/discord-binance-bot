@@ -3,6 +3,7 @@ from os import getcwd, path
 from os import _exit as exit
 from signal import SIGINT, signal
 from json import loads
+import re
 
 from .Request import DiscordRequest
 
@@ -136,6 +137,8 @@ class DiscordScraper(object):
 
         self.author_ids = config.author_ids
 
+        self.templates = config.templates
+
         self.guilds = config.guilds if len(config.guilds) > 0 else {}
 
         # Create a blank guild name, channel name, and folder location class variable.
@@ -190,7 +193,7 @@ class DiscordScraper(object):
             # Read the response data and convert it into a dictionary object.
             data = loads(response.read())
 
-            return data
+            return data[0]
         except Exception as ex:
             print(ex)
 
@@ -219,3 +222,26 @@ class DiscordScraper(object):
             return message
         else:
             return None
+
+    def parseSignalCalls(self, message, authorId):
+        """
+        Parse a message with the configured template against a admin id
+        :param message: a message to be parsed
+        :return: parsed json
+        """
+
+        if authorId not in self.templates.keys():
+            return None
+
+        template = self.templates[authorId]
+
+        pattern = re.escape(template)
+        pattern = re.sub(r'\\\$(\w+)', r'(?P<\1>.*)', pattern)
+        match = re.match(pattern, message)
+
+        contentDict = match.groupdict()
+
+        contentDict['buy_range'] = contentDict['buy_range'].split('-')
+        contentDict['profit_range'] = contentDict['profit_range'].split('-')
+
+        return contentDict

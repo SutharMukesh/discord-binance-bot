@@ -9,7 +9,4 @@
 module/__pycache__/
 module/*.pyc
 
-# Do not modify config.unmodified.json, instead copy it and name it "config.json" so that we don't accidentally push your config to your Github.
-config.json
-
 .history
