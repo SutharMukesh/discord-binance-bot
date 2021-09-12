@@ -1,3 +1,4 @@
+from module import DiscordScraper, MongoUtils
 from os import getcwd, path
 from json import loads
 
@@ -34,6 +35,7 @@ if __name__ == '__main__':
 
     # Create a variable that references the Discord Scraper class.
     discordscraper = DiscordScraper(config)
+    mongoUtils = MongoUtils(config)
 
     # Iterate through the guilds to scrape.
     for guild, channels in discordscraper.guilds.items():
@@ -55,5 +57,10 @@ if __name__ == '__main__':
             doc = discordscraper.parseSignalCalls(messageContent, authorId)
             doc['timestamp'] = adminMessage['timestamp']
             doc['msg_id'] = adminMessage['id']
+            doc['is_active'] = True
+            doc['bought'] = False
+
+            inserted_doc = mongoUtils.insertSignals(doc)
+
 
             print(doc)
