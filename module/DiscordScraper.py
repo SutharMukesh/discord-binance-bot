@@ -50,7 +50,7 @@ class DiscordScraper(object):
     This class will contain all of the important functions that will be used that works with both Python 2 and Python 3 interpreters.
     """
 
-    def __init__(self, configfile=None, apiversion=None):
+    def __init__(self, config, apiversion=None):
         """
         The class constructor function that is not needed for calling any of the static functions.
         :param self: A reference to the class object that will be used to call any non-static functions in this class.
@@ -58,37 +58,11 @@ class DiscordScraper(object):
         :param apiversion: The API version that Discord uses for its backend, this is currently set to "v8" as of November 2020.
         """
 
-        # Determine if the configfile argument is not set.
-        if configfile is None:
-
-            # Set it to the default value of "config.json"
-            configfile = 'config.json'
-
         # Determine if the apiversion argument is not set.
         if apiversion is None:
 
             # Set it to the default value of "v8"
             apiversion = 'v8'
-
-        # Generate a direct file path to the configuration file.
-        configfile = path.join(getcwd(), configfile)
-
-        # Throw an error if the configuration file doesn't exist.
-        if not path.exists(configfile):
-            error('Configuration file can not be found at the following location: {0}'.format(
-                configfile))
-
-        # Open the config file in text-mode for reading.
-        with open(configfile, 'r') as configfilestream:
-
-            # Read the entire config file.
-            configfiledata = configfilestream.read()
-
-        # Convert the serialized JSON contents of the configuration file into a dictionary.
-        configdata = loads(configfiledata)
-
-        # Convert the configuration dictionary into a class object.
-        config = type('DiscordConfig', (object, ), configdata)()
 
         # Generate a direct file path to the authorization token file.
         tokenfile = path.join(getcwd(), config.token_file)
