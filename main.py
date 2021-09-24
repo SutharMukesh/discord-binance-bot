@@ -1,4 +1,4 @@
-from module import DiscordScraper, MongoUtils
+from module import BinanceUtils, DiscordScraper, MongoUtils
 from os import getcwd, path
 from json import loads
 
@@ -36,31 +36,61 @@ if __name__ == '__main__':
     # Create a variable that references the Discord Scraper class.
     discordscraper = DiscordScraper(config)
     mongoUtils = MongoUtils(config)
-
+    binanceUtils = BinanceUtils(config)
     # Iterate through the guilds to scrape.
     for guild, channels in discordscraper.guilds.items():
 
         # Iterate through the channels to scrape in the guild.
         for channel in channels:
+            '''
+             Get "bought=False and is_placed=True" records from mongo.
+             Check if these records are bought on binance
+             if Bought then update as bought=True
+             then put the OCO sell order with stoploss
+             update OCO_placed=True
+            '''
 
-            # Retrieve the datetime object for the most recent post in the channel.
+            # GET Last message from the channel
             lastMessage = discordscraper.getLastMessageGuild(guild, channel)
 
+            # Check if that message is from admin/ or the author which gives us signals.
             adminMessage = discordscraper.filterMessageFromAdmins(lastMessage)
-
             if not adminMessage:
+                print(
+                    f"Message is not from admin, ignoring {lastMessage['content']}")
                 continue
 
+            # Parse the message
             messageContent = adminMessage['content']
             authorId = adminMessage['author']['id']
-
             doc = discordscraper.parseSignalCalls(messageContent, authorId)
             doc['timestamp'] = adminMessage['timestamp']
             doc['msg_id'] = adminMessage['id']
             doc['is_active'] = True
             doc['bought'] = False
+            doc['symbol'] = doc['symbol'].replace('/', '')
 
+            # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
             inserted_doc = mongoUtils.insertSignals(doc)
 
+            # Place Buy order
+            symbol = doc['symbol']
+            binance_res = binanceUtils.placeBuyOrder(
+                doc['symbol'], doc['buy_range'])
 
-            print(doc)
+            # if order is not bought, and the order is open; then update mongo with bought=False and exit
+            if not binance_res['bought']:
+                mongoUtils.updateSignal(inserted_doc['_id'], {
+                    "bought": False
+                })
+                continue
+
+            # If order is closed and bought, then update mongo with bought=True
+            doc['bought'] = True
+            mongoUtils.updateSignal(inserted_doc['_id'], {
+                "bought": True
+            })
+
+            # Place OCO with stop loss
+
+            # Update mongo as oco_placed=true

@@ -149,7 +149,7 @@ class DiscordScraper(object):
         """
 
         # Generate a valid URL to the documented API function for retrieving channel messages (we don't care about the 100 message limit this time).
-        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=1'.format(
+        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
             self.apiversion, channel)
 
         # Update the HTTP request headers to set the referer to the current guild channel URL.
@@ -167,7 +167,7 @@ class DiscordScraper(object):
             # Read the response data and convert it into a dictionary object.
             data = loads(response.read())
 
-            return data[0]
+            return data[-1]
         except Exception as ex:
             print(ex)
 
