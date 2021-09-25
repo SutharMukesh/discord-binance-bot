@@ -10,3 +10,4 @@ module/__pycache__/
 module/*.pyc
 
 .history
+pyenv
