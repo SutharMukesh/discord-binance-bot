@@ -2,7 +2,7 @@ from sys import stderr
 from os import getcwd, path
 from os import _exit as exit
 from signal import SIGINT, signal
-from json import loads
+import json
 import re
 
 from .Request import DiscordRequest
@@ -149,7 +149,7 @@ class DiscordScraper(object):
         """
 
         # Generate a valid URL to the documented API function for retrieving channel messages (we don't care about the 100 message limit this time).
-        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
+        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=3'.format(
             self.apiversion, channel)
 
         # Update the HTTP request headers to set the referer to the current guild channel URL.
@@ -165,7 +165,7 @@ class DiscordScraper(object):
                 return None
 
             # Read the response data and convert it into a dictionary object.
-            data = loads(response.read())
+            data = json.loads(response.read())
 
             return data[-1]
         except Exception as ex:
@@ -197,6 +197,12 @@ class DiscordScraper(object):
         else:
             return None
 
+    def matchDataUsingTemplate(self, template, message):
+        pattern = re.escape(template)
+        pattern = re.sub(r'\\\$(\w+)', r'(?P<\1>.*)', pattern)
+        match = re.match(pattern, message)
+        return match.groupdict()
+
     def parseSignalCalls(self, message, authorId):
         """
         Parse a message with the configured template against a admin id
@@ -207,15 +213,14 @@ class DiscordScraper(object):
         if authorId not in self.templates.keys():
             return None
 
-        template = self.templates[authorId]
-
-        pattern = re.escape(template)
-        pattern = re.sub(r'\\\$(\w+)', r'(?P<\1>.*)', pattern)
-        match = re.match(pattern, message)
-
-        contentDict = match.groupdict()
-
-        contentDict['buy_range'] = contentDict['buy_range'].split('-')
-        contentDict['profit_range'] = contentDict['profit_range'].split('-')
+        # Supporting multiple templates, as admin/author can send a message in different formats.
+        templates = self.templates[authorId]
+        for template in templates:
+            try:
+                contentDict = self.matchDataUsingTemplate(template, message)
+                break
+            except Exception as e:
+                warn(
+                    f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}; error: {e}')
 
         return contentDict
