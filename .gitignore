@@ -11,3 +11,4 @@ module/*.pyc
 
 .history
 pyenv
+.idea
