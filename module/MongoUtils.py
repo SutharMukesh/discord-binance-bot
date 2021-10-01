@@ -14,7 +14,11 @@ class MongoUtils(object):
 
     @staticmethod
     def getDb(self, databaseName):
-
+        """
+        Gets db instance
+        it will instantiate the client for the first call
+        then it will get it from self object.
+        """
         if self.db:
             return self.db
 
@@ -24,6 +28,9 @@ class MongoUtils(object):
         return db
 
     def insertSignals(self, doc):
+        """
+        Insert signal info into mongo db
+        """
 
         db = self.getDb(self, self.database_name)
         collection = db[self.signal_collection]
@@ -37,6 +44,9 @@ class MongoUtils(object):
         return doc
 
     def getSignal(self, filter_obj):
+        """
+        Get signal info from mongo db
+        """
 
         db = self.getDb(self, self.database_name)
         collection = db[self.signal_collection]
@@ -44,6 +54,9 @@ class MongoUtils(object):
         return collection.find_one(filter_obj)
 
     def getAllPendingBuySignals(self):
+        """
+        Get all open orders
+        """
         db = self.getDb(self, self.database_name)
         collection = db[self.signal_collection]
 
@@ -52,6 +65,9 @@ class MongoUtils(object):
         })
 
     def updateSignal(self, _id, updateDoc):
+        """
+        Update a signal doc
+        """
 
         db = self.getDb(self.database_name)
         collection = db[self.signal_collection]
