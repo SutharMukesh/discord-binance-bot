@@ -12,13 +12,16 @@ class BinanceUtils(object):
 
         self.client = Client(self.api_key, self.api_secret)
 
-    def placeBuyOrder(self, sym, buy_range):
-        info = self.client.get_ticker(symbol=sym)
+    def placeBuyOrder(self, params):
+        symbol = params["symbol"]
+        buyRange = params["buy_range"]
+        sellTargets = params["sell_targets"]
+        stopLoss = params["stop_loss"]
+
+        info = self.client.get_ticker(symbol=symbol)
         lastPrice = info['lastPrice']
 
-        print(buy_range, lastPrice)
-        if lastPrice in range(buy_range[0], buy_range[1]):
-            print('placing buy order')
+        print(symbol, buyRange, sellTargets, stopLoss, lastPrice)
 
     def placeSellTargetOrders(self, sym, sell_range):
         print(sym)
