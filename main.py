@@ -74,9 +74,22 @@ if __name__ == '__main__':
             inserted_doc = mongoUtils.insertSignals(doc)
 
             # Place Buy order
-            symbol = doc['symbol']
-            binance_res = binanceUtils.placeBuyOrder(
-                doc['symbol'], doc['buy_range'])
+            binanceParams = {
+                "symbol": doc['symbol'] + doc['base_curr'],
+                "buy_range": {
+                    "low": float(doc['buy_low']),
+                    "high": float(doc['buy_high'])
+                },
+                "sell_targets": {
+                    "t1": float(doc["t1"]),
+                    "t2": float(doc["t2"]),
+                    "t3": float(doc["t3"]),
+                    "t4": float(doc["t4"]),
+                },
+                "stop_loss": float(doc['stop_loss'])
+            }
+
+            binance_res = binanceUtils.placeBuyOrder(binanceParams)
 
             # if order is not bought, and the order is open; then update mongo with bought=False and exit
             if not binance_res['bought']:
