@@ -37,10 +37,10 @@ if __name__ == '__main__':
     discordscraper = DiscordScraper(config)
     mongoUtils = MongoUtils(config)
     binanceUtils = BinanceUtils(config)
-    # Iterate through the guilds to scrape.
-    for guild, channels in discordscraper.guilds.items():
+    # Iterate through the servers to scrape.
+    for server, channels in discordscraper.servers.items():
 
-        # Iterate through the channels to scrape in the guild.
+        # Iterate through the channels to scrape in the server.
         for channel in channels:
             '''
              Get "bought=False and is_placed=True" records from mongo.
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             '''
 
             # GET Last message from the channel
-            lastMessage = discordscraper.getLastMessageGuild(guild, channel)
+            lastMessage = discordscraper.getLastMessageServer(server, channel)
 
             # Check if that message is from admin/ or the author which gives us signals.
             adminMessage = discordscraper.filterMessageFromAdmins(lastMessage)
