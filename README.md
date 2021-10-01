@@ -9,6 +9,14 @@ A bot which watches for new signals from a discord channel and place the order o
    source venv/bin/activate
    pip install -r requirements.txt
    ```
+ - Windows
+   ```python
+   cd discord-binance-bot
+   python -m venv venv
+   source venv/Scripts/activate
+   pip install -r requirements.txt
+   ```
+
 # Fix, if needed
 1. `ImportError: cannot import name 'Client' from 'binance'`
 
