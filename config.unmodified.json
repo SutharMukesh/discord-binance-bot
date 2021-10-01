@@ -1,8 +1,12 @@
 {
-    "tokenfile": "{enter token filename (with extension) here}",
+    "token_file": "discord.token",
     "useragent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.309 Chrome/83.0.4103.122 Electron/9.3.5 Safari/537.36",
     "buffer": 1048576,
-
+    "connection_string": "mongodb+srv://USER:PASS@HOST/DB?retryWrites=true&w=majority",
+    "binance": {
+        "api_key": "API_KEY",
+        "api_secret": "API_SECRET"
+    },
     "options": {
         "validateFileHeaders": false,
         "generateFileChecksums": false,
@@ -11,28 +15,24 @@
         "compressTextData": false,
         "gatherJSONData": true
     },
-
     "types": {
-        "images": true,
-        "videos": true,
-        "files": true,
+        "images": false,
+        "videos": false,
+        "files": false,
         "text": true
     },
-    
     "guilds": {
-        "guild/server 1 id": [
-            "guild/server 1 channel 1 id",
-            "guild/server 1 channel 2 id",
-            "guild/server 1 channel 3 id"
-        ],
-        "guild/server 2 id": [
-            "guild/server 2 channel 1 id",
-            "guild/server 2 channel 2 id",
-            "guild/server 2 channel 3 id"
+        "398075210949066764": [
+            "398075210949066766"
         ]
     },
-
-    "author_ids" : [
-        "author_user_id"
-    ]
+    "author_ids": [
+        "862346622611750964"
+    ],
+    "templates": {
+        "862346622611750964": [
+            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_low-$buy_high\n\nWe Take Profit - $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
+            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_low-$buy_high\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss"
+        ]
+    }
 }

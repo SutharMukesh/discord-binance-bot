@@ -12,3 +12,5 @@ module/*.pyc
 .history
 pyenv
 .idea
+
+config.json
