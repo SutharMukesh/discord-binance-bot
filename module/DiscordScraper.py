@@ -82,7 +82,7 @@ class DiscordScraper(object):
         self.headers = {
             # The user-agent string that tells the server which browser, operating system, and rendering engine we're using.
             'User-Agent': config.useragent,
-            'Authorization': tokenfiledata     # The authorization token that authorizes this script to carry out actions with your account, this script only requires this to access the data on the specified guilds and channels for scraping purposes. NEVER UNDER ANY CIRCUMSTANCE SHARE THIS VALUE TO ANYONE YOU DO NOT TRUST!
+            'Authorization': tokenfiledata     # The authorization token that authorizes this script to carry out actions with your account, this script only requires this to access the data on the specified servers and channels for scraping purposes. NEVER UNDER ANY CIRCUMSTANCE SHARE THIS VALUE TO ANYONE YOU DO NOT TRUST!
         }
 
         # Create some class variables to store the configuration file data.
@@ -113,10 +113,10 @@ class DiscordScraper(object):
 
         self.templates = config.templates
 
-        self.guilds = config.guilds if len(config.guilds) > 0 else {}
+        self.servers = config.servers if len(config.servers) > 0 else {}
 
-        # Create a blank guild name, channel name, and folder location class variable.
-        self.guildname = None
+        # Create a blank server name, channel name, and folder location class variable.
+        self.servername = None
         self.channelname = None
         self.location = None
 
@@ -141,10 +141,10 @@ class DiscordScraper(object):
         # Return the response.
         return request.sendRequest(url)
 
-    def getLastMessageGuild(self, guild, channel):
+    def getLastMessageServer(self, server, channel):
         """
         Use the official Discord API to retrieve the last publicly viewable message in a channel.
-        :param guild: The ID for the guild that we're wanting to scrape from.
+        :param server: The ID for the server that we're wanting to scrape from.
         :param channel: The ID for the channel that we're wanting to scrape from.
         """
 
@@ -152,9 +152,9 @@ class DiscordScraper(object):
         lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=3'.format(
             self.apiversion, channel)
 
-        # Update the HTTP request headers to set the referer to the current guild channel URL.
+        # Update the HTTP request headers to set the referer to the current server channel URL.
         self.headers.update(
-            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(guild, channel)})
+            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})
 
         try:
             # Execute the network query to retrieve the JSON data.
