@@ -22,6 +22,14 @@ class BinanceUtils(object):
         lastPrice = info['lastPrice']
 
         print(symbol, buyRange, sellTargets, stopLoss, lastPrice)
+        
+        order = self.client.create_test_order(
+            symbol=symbol,
+            side='BUY',
+            type='LIMIT',
+            timeInForce='GTC',
+            quantity=1,
+            price=lastPrice)
 
     def placeSellTargetOrders(self, sym, sell_range):
         print(sym)
