@@ -1,42 +1,9 @@
-from sys import stderr
 from os import getcwd, path
-from os import _exit as exit
-from signal import SIGINT, signal
 import json
 import re
 
 from .Request import DiscordRequest
-
-
-def sigintEvent(sig, frame):
-    print('You pressed CTRL + C')
-    exit(0)
-
-
-signal(SIGINT, sigintEvent)
-
-
-def error(message):
-    """
-    Throw an error message and then halt the script.
-    :param message: A string that will be printed out to STDERR before exiting the script.
-    """
-
-    # Append our message with a newline character.
-    stderr.write('[ERROR]: {0}\n'.format(message))
-
-    # Halt the script right here, do not continue running the script after this point.
-    exit(1)
-
-
-def warn(message):
-    """
-    Throw a warning message without halting the script.
-    :param message: A string that will be printed out to STDERR.
-    """
-
-    # Append our message with a newline character.
-    stderr.write('[WARN] {0}\n'.format(message))
+from .SystemUtils import error, warn
 
 
 class DiscordConfig(object):
@@ -225,6 +192,7 @@ class DiscordScraper(object):
                     f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}; error: {e}')
 
         if not parsedMessage:
-            raise Exception(f'No template matched for message: {json.dumps(message)}')
+            raise Exception(
+                f'No template matched for message: {json.dumps(message)}')
 
         return parsedMessage
