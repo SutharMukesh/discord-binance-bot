@@ -215,12 +215,16 @@ class DiscordScraper(object):
 
         # Supporting multiple templates, as admin/author can send a message in different formats.
         templates = self.templates[authorId]
+        parsedMessage = None
         for template in templates:
             try:
-                contentDict = self.matchDataUsingTemplate(template, message)
+                parsedMessage = self.matchDataUsingTemplate(template, message)
                 break
             except Exception as e:
                 warn(
                     f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}; error: {e}')
 
-        return contentDict
+        if not parsedMessage:
+            raise Exception(f'No template matched for message: {json.dumps(message)}')
+
+        return parsedMessage
