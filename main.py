@@ -64,11 +64,11 @@ if __name__ == '__main__':
             messageContent = adminMessage['content']
             authorId = adminMessage['author']['id']
             doc = discordscraper.parseSignalCalls(messageContent, authorId)
+            doc = binanceUtils.adjustSignalCallsDigits(doc)
             doc['timestamp'] = adminMessage['timestamp']
             doc['msg_id'] = adminMessage['id']
             doc['is_active'] = True
             doc['bought'] = False
-            doc['symbol'] = doc['symbol'].replace('/', '')
 
             # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
             inserted_doc = mongoUtils.insertSignals(doc)
