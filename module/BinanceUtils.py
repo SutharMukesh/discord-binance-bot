@@ -11,6 +11,7 @@ class BinanceUtils(object):
     def __init__(self, config):
         self.api_key = config.binance['api_key']
         self.api_secret = config.binance['api_secret']
+        self.single_buy_order_amount_in_btc = config.binance['single_buy_order_amount_in_btc']
 
         self.client = Client(self.api_key, self.api_secret)
 
@@ -35,16 +36,37 @@ class BinanceUtils(object):
                     doc[keyword] = BINANCE_BTC_BASE_DIGITS * int(doc[keyword])
         return doc
 
-    def placeBuyOrder(self, params):
-        symbol = params["symbol"]
-        buyRange = params["buy_range"]
-        sellTargets = params["sell_targets"]
-        stopLoss = params["stop_loss"]
+    def getCurrentPrice(self, symbol):
+        info = self.client.get_symbol_ticker(symbol=symbol)
+        return info['price']
 
-        info = self.client.get_ticker(symbol=symbol)
-        lastPrice = info['lastPrice']
+    def placeBuyOrder(self, doc):
+        symbol = doc['symbol'] + doc['base_curr']
 
-        print(symbol, buyRange, sellTargets, stopLoss, lastPrice)
+        symbolCurrentPrice = self.getCurrentPrice(symbol)
+        order = None
+
+        # if symbolCurrentPrice >= doc['buy_low'] and symbolCurrentPrice <= doc['buy_high']:
+        buy_quantity = int(
+            self.single_buy_order_amount_in_btc / float(symbolCurrentPrice))
+
+        print(
+            f'[BUY] placing buy order for {symbol}, at currentPrice: {symbolCurrentPrice} for quantity {buy_quantity}')
+
+        order = self.client.create_order(
+            symbol=symbol,
+            side=self.client.SIDE_BUY,
+            type=self.client.ORDER_TYPE_MARKET,
+            quantity=buy_quantity)
+
+        # MARKET BUY RESPONSE
+        # {'symbol': 'XLMBTC', 'orderId': 337069143, 'orderListId': -1, 'clientOrderId': 'ExXyc0Pe5fxbGq2JQOiMb0', 'transactTime': 1634473285073, 'price': '0.00000000', 'origQty': '28.00000000', 'executedQty': '28.00000000', 'cummulativeQuoteQty': '0.00017696', 'status': 'FILLED', 'timeInForce': 'GTC', 'type': 'MARKET', 'side': 'BUY', 'fills': [{'price': '0.00000632', 'qty': '28.00000000', 'commission': '0.00001721', 'commissionAsset': 'BNB', 'tradeId': 49295215}]}
+
+        # LIMIT BUY RESPONSE
+        # {'symbol': 'XLMBTC', 'orderId': 337068806, 'orderListId': -1, 'clientOrderId': 'PfRtJWgdB7Yq80vqxsxUVN', 'transactTime': 1634473116012, 'price': '0.00000630', 'origQty': '28.00000000', 'executedQty': '0.00000000', 'cummulativeQuoteQty': '0.00000000', 'status': 'NEW', 'timeInForce': 'GTC', 'type': 'LIMIT', 'side': 'BUY', 'fills': []}
+
+        print(order)
+        return order
 
     def placeSellTargetOrders(self, sym, sell_range):
         print(sym)

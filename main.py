@@ -65,43 +65,19 @@ if __name__ == '__main__':
             authorId = adminMessage['author']['id']
             doc = discordscraper.parseSignalCalls(messageContent, authorId)
             doc = binanceUtils.adjustSignalCallsDigits(doc)
+
+            # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
             doc['timestamp'] = adminMessage['timestamp']
             doc['msg_id'] = adminMessage['id']
             doc['is_active'] = True
-            doc['bought'] = False
-
-            # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
             inserted_doc = mongoUtils.insertSignals(doc)
 
             # Place Buy order
-            binanceParams = {
-                "symbol": doc['symbol'] + doc['base_curr'],
-                "buy_range": {
-                    "low": float(doc['buy_low']),
-                    "high": float(doc['buy_high'])
-                },
-                "sell_targets": {
-                    "t1": float(doc["t1"]),
-                    "t2": float(doc["t2"]),
-                    "t3": float(doc["t3"]),
-                    "t4": float(doc["t4"]),
-                },
-                "stop_loss": float(doc['stop_loss'])
-            }
+            binance_res = binanceUtils.placeBuyOrder(doc)
 
-            binance_res = binanceUtils.placeBuyOrder(binanceParams)
-
-            # if order is not bought, and the order is open; then update mongo with bought=False and exit
-            if not binance_res['bought']:
-                mongoUtils.updateSignal(inserted_doc['_id'], {
-                    "bought": False
-                })
-                continue
-
-            # If order is closed and bought, then update mongo with bought=True
-            doc['bought'] = True
+            # Update the binance buy order response.
             mongoUtils.updateSignal(inserted_doc['_id'], {
-                "bought": True
+                "binance_res": binance_res
             })
 
             # Place OCO with stop loss
