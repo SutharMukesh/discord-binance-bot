@@ -70,11 +70,11 @@ class BinanceUtils(object):
 
             if sellTarget < minAllowedSellPrice:
                 raise Exception(
-                    f'Symbol: {symbol} is not buyable as sell target price for target: {target}, quantity: {targetQuantity}, price: {sellTarget} < minAllowedSellPrice: {minAllowedSellPrice}')
+                    f'Symbol: "{symbol}" is not buyable as sell target price for target: {target}, quantity: {targetQuantity}, price: {format(sellTarget, ".8f")} < minAllowedSellPrice: {minAllowedSellPrice}')
 
             if stopLossTarget < minAllowedSellPrice:
                 raise Exception(
-                    f'Symbol: {symbol} is not buyable as stop loss target price for target: {target}, quantity: {targetQuantity}, stop loss: {stopLossTarget} < minAllowedSellPrice: {minAllowedSellPrice}')
+                    f'Symbol: "{symbol}" is not buyable as stop loss target price for target: {target}, quantity: {targetQuantity}, stop loss: {format(stopLossTarget, ".8f")} < minAllowedSellPrice: {minAllowedSellPrice}')
 
     def placeBuyOrder(self, doc):
         symbol = doc['symbol'] + doc['base_curr']
@@ -87,13 +87,13 @@ class BinanceUtils(object):
         order = None
         if symbolCurrentPrice <= doc['buy_low'] or symbolCurrentPrice >= doc['buy_high']:
             raise Exception(
-                f'[Ignored] buy order not placed for "{symbol}" as currentPrice: {symbolCurrentPrice} is out of buy range: {doc["buy_low"]}-{doc["buy_high"]}')
+                f'Buy order not placed for "{symbol}" as currentPrice: {format(symbolCurrentPrice, ".8f")} is out of buy range: {format(doc["buy_low"], ".8f")} - {format(doc["buy_high"], ".8f")}')
 
         buy_quantity = int(
             self.single_buy_order_amount_in_btc / float(symbolCurrentPrice))
 
         print(
-            f'[BUY] placing buy order for {symbol}, at currentPrice: {symbolCurrentPrice} for quantity {buy_quantity}')
+            f'[BUY] placing buy order for "{symbol}", at currentPrice: {format(symbolCurrentPrice, ".8f")} for quantity {buy_quantity}')
 
         order = self.client.create_order(
             symbol=symbol,
@@ -134,7 +134,7 @@ class BinanceUtils(object):
                 quantity = self.oco_targets[target] * quantityPurchased
                 sell_target = format(doc[target], '.8f')
                 print(
-                    f'[SELL-OCO] Placing sell oco for {symbol} at price: {sell_target}, quantity: {quantity} and stop_loss: {stop_loss}')
+                    f'[SELL-OCO] Placing sell OCO for "{symbol}" at price: {sell_target}, quantity: {quantity} and stop_loss: {stop_loss}')
 
                 stop_price = format(float(stop_loss) +
                                     (float(stop_loss)*0.01), '.8f')
@@ -152,7 +152,7 @@ class BinanceUtils(object):
         except Exception as e:
             error(e)
             print(
-                f'[SELL-MARKET] selling symbol: {symbol} at market price for quantity: {quantityPurchased}')
+                f'[SELL-MARKET] selling symbol: "{symbol}" at market price for quantity: {quantityPurchased}')
             self.placeMarketSellOrder(doc, quantityPurchased)
 
         return oco_responses
