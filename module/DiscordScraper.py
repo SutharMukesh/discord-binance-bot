@@ -136,7 +136,7 @@ class DiscordScraper(object):
 
             return data[-1]
         except Exception as ex:
-            print(ex)
+            error(ex)
 
     def filterMessageFromAdmins(self, message):
         """

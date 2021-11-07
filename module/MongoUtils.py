@@ -69,7 +69,7 @@ class MongoUtils(object):
         Update a signal doc
         """
 
-        db = self.getDb(self.database_name)
+        db = self.getDb(self, self.database_name)
         collection = db[self.signal_collection]
 
         return collection.update({

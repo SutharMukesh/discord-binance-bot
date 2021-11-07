@@ -20,9 +20,6 @@ def error(message):
     # Append our message with a newline character.
     stderr.write('[ERROR]: {0}\n'.format(message))
 
-    # Halt the script right here, do not continue running the script after this point.
-    exit(1)
-
 
 def warn(message):
     """
