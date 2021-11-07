@@ -14,6 +14,7 @@ class BinanceUtils(object):
         self.single_buy_order_amount_in_btc = config.binance['single_buy_order_amount_in_btc']
 
         self.client = Client(self.api_key, self.api_secret)
+        self.oco_targets = config.oco_targets
 
     def adjustSignalCallsDigits(self, doc):
         """
@@ -51,15 +52,43 @@ class BinanceUtils(object):
 
     def getCurrentPrice(self, symbol):
         info = self.client.get_symbol_ticker(symbol=symbol)
-        return info['price']
+        return float(info['price'])
+
+    def isItBuyable(self, symbol, currentPrice, sellTargets, stopLoss):
+        symbolInfo = self.client.get_symbol_info(symbol=symbol)
+
+        minNotional = list(filter(
+            lambda x: x['filterType'] == 'MIN_NOTIONAL', symbolInfo['filters']))
+        minAllowedSellPrice = float(minNotional[0]['minNotional'])
+
+        for target in self.oco_targets:
+            quantityToBePurchased = self.single_buy_order_amount_in_btc/currentPrice
+            targetQuantity = self.oco_targets[target] * quantityToBePurchased
+
+            sellTarget = sellTargets[target] * targetQuantity
+            stopLossTarget = stopLoss * targetQuantity
+
+            if sellTarget < minAllowedSellPrice:
+                raise Exception(
+                    f'Symbol: {symbol} is not buyable as sell target price for target: {target}, quantity: {targetQuantity}, price: {sellTarget} < minAllowedSellPrice: {minAllowedSellPrice}')
+
+            if stopLossTarget < minAllowedSellPrice:
+                raise Exception(
+                    f'Symbol: {symbol} is not buyable as stop loss target price for target: {target}, quantity: {targetQuantity}, stop loss: {stopLossTarget} < minAllowedSellPrice: {minAllowedSellPrice}')
 
     def placeBuyOrder(self, doc):
         symbol = doc['symbol'] + doc['base_curr']
 
         symbolCurrentPrice = self.getCurrentPrice(symbol)
-        order = None
 
-        # if symbolCurrentPrice >= doc['buy_low'] and symbolCurrentPrice <= doc['buy_high']:
+        self.isItBuyable(
+            symbol=symbol, currentPrice=symbolCurrentPrice, sellTargets=doc, stopLoss=doc['stop_loss'])
+
+        order = None
+        if symbolCurrentPrice <= doc['buy_low'] or symbolCurrentPrice >= doc['buy_high']:
+            raise Exception(
+                f'[Ignored] buy order not placed for "{symbol}" as currentPrice: {symbolCurrentPrice} is out of buy range: {doc["buy_low"]}-{doc["buy_high"]}')
+
         buy_quantity = int(
             self.single_buy_order_amount_in_btc / float(symbolCurrentPrice))
 
@@ -78,7 +107,8 @@ class BinanceUtils(object):
         # LIMIT BUY RESPONSE
         # {'symbol': 'XLMBTC', 'orderId': 337068806, 'orderListId': -1, 'clientOrderId': 'PfRtJWgdB7Yq80vqxsxUVN', 'transactTime': 1634473116012, 'price': '0.00000630', 'origQty': '28.00000000', 'executedQty': '0.00000000', 'cummulativeQuoteQty': '0.00000000', 'status': 'NEW', 'timeInForce': 'GTC', 'type': 'LIMIT', 'side': 'BUY', 'fills': []}
 
-        print(order)
+        # print(order)
+        return order
         return order
 
     def placeSellTargetOrders(self, sym, sell_range):
