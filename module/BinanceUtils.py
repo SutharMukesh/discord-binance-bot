@@ -24,7 +24,7 @@ class BinanceUtils(object):
             if the btc_price > 1, assuming here the signal will never exceed 1btc.
         """
         supportedSignalKeywords = [
-            'buy_low', 'buy_high', 't1', 't2', 't3', 't4', 'stop_loss']
+            'buy_range_1', 'buy_range_2', 't1', 't2', 't3', 't4', 'stop_loss']
 
         if doc['base_curr'] == 'BTC':
             for keyword in doc:
@@ -34,6 +34,19 @@ class BinanceUtils(object):
                             f'cannot adjust {keyword}: {doc[keyword]} as it is < 1')
                         continue
                     doc[keyword] = BINANCE_BTC_BASE_DIGITS * int(doc[keyword])
+        return doc
+
+    def reAdjustBuyRange(self, doc):
+        buyRange1 = doc['buy_range_1']
+        buyRange2 = doc['buy_range_2']
+
+        if buyRange1 < buyRange2:
+            doc['buy_low'] = buyRange1
+            doc['buy_high'] = buyRange2
+        else:
+            doc['buy_low'] = buyRange2
+            doc['buy_high'] = buyRange1
+
         return doc
 
     def getCurrentPrice(self, symbol):

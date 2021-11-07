@@ -65,6 +65,7 @@ if __name__ == '__main__':
             authorId = adminMessage['author']['id']
             doc = discordscraper.parseSignalCalls(messageContent, authorId)
             doc = binanceUtils.adjustSignalCallsDigits(doc)
+            doc = binanceUtils.reAdjustBuyRange(doc)
 
             # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
             doc['timestamp'] = adminMessage['timestamp']

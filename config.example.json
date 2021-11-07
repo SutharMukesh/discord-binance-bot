@@ -5,7 +5,8 @@
     "connection_string": "mongodb+srv://USER:PASS@HOST/DB?retryWrites=true&w=majority",
     "binance": {
         "api_key": "API_KEY",
-        "api_secret": "API_SECRET"
+        "api_secret": "API_SECRET",
+        "single_buy_order_amount_in_btc": 0.00044
     },
     "options": {
         "validateFileHeaders": false,
@@ -21,7 +22,7 @@
         "files": false,
         "text": true
     },
-    "guilds": {
+    "servers": {
         "398075210949066764": [
             "398075210949066766"
         ]
@@ -31,8 +32,8 @@
     ],
     "templates": {
         "862346622611750964": [
-            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_low-$buy_high\n\nWe Take Profit - $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
-            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_low-$buy_high\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss"
+            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit - $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
+            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss"
         ]
     }
 }
