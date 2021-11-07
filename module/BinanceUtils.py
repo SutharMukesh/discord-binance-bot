@@ -1,5 +1,5 @@
 from binance import Client
-from .SystemUtils import warn
+from .SystemUtils import warn, error
 BINANCE_BTC_BASE_DIGITS = 0.00000001
 
 
@@ -109,7 +109,50 @@ class BinanceUtils(object):
 
         # print(order)
         return order
+
+    def placeMarketSellOrder(self, doc, quantityPurchased):
+        symbol = doc['symbol'] + doc['base_curr']
+        order = self.client.create_order(
+            symbol=symbol,
+            side=self.client.SIDE_SELL,
+            type=self.client.ORDER_TYPE_MARKET,
+            quantity=quantityPurchased)
         return order
 
-    def placeSellTargetOrders(self, sym, sell_range):
-        print(sym)
+    def placeOCOSellOrdersForAllTargets(self, doc, quantityPurchased):
+        """
+        Place OCO sell orders for top 3 targets given in signals
+        Sell distribution is 25-50-20
+        """
+
+        symbol = doc['symbol'] + doc['base_curr']
+
+        stop_loss = format(doc['stop_loss'], '.8f')
+        try:
+            oco_responses = []
+            for target in self.oco_targets:
+                quantity = self.oco_targets[target] * quantityPurchased
+                sell_target = format(doc[target], '.8f')
+                print(
+                    f'[SELL-OCO] Placing sell oco for {symbol} at price: {sell_target}, quantity: {quantity} and stop_loss: {stop_loss}')
+
+                stop_price = format(float(stop_loss) +
+                                    (float(stop_loss)*0.01), '.8f')
+
+                order = self.client.create_oco_order(
+                    symbol=symbol,
+                    side=self.client.SIDE_SELL,
+                    price=sell_target,
+                    quantity=quantity,
+                    stopPrice=str(stop_price),
+                    stopLimitPrice=stop_loss,
+                    stopLimitTimeInForce='FOK')
+
+                oco_responses.append(order)
+        except Exception as e:
+            error(e)
+            print(
+                f'[SELL-MARKET] selling symbol: {symbol} at market price for quantity: {quantityPurchased}')
+            self.placeMarketSellOrder(doc, quantityPurchased)
+
+        return oco_responses

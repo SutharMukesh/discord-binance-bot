@@ -1,4 +1,4 @@
-from module import BinanceUtils, DiscordScraper, MongoUtils
+from module import BinanceUtils, DiscordScraper, MongoUtils, SystemUtils
 from os import getcwd, path
 from json import loads
 
@@ -42,45 +42,59 @@ if __name__ == '__main__':
 
         # Iterate through the channels to scrape in the server.
         for channel in channels:
-            '''
-             Get "bought=False and is_placed=True" records from mongo.
-             Check if these records are bought on binance
-             if Bought then update as bought=True
-             then put the OCO sell order with stoploss
-             update OCO_placed=True
-            '''
+            try:
+                '''
+                Get "bought=False and is_placed=True" records from mongo.
+                Check if these records are bought on binance
+                if Bought then update as bought=True
+                then put the OCO sell order with stoploss
+                update OCO_placed=True
+                '''
 
-            # GET Last message from the channel
-            lastMessage = discordscraper.getLastMessageServer(server, channel)
+                # GET Last message from the channel
+                lastMessage = discordscraper.getLastMessageServer(
+                    server, channel)
 
-            # Check if that message is from admin/ or the author which gives us signals.
-            adminMessage = discordscraper.filterMessageFromAdmins(lastMessage)
-            if not adminMessage:
-                print(
-                    f"Message is not from admin, ignoring {lastMessage['content']}")
-                continue
+                # Check if that message is from admin/ or the author which gives us signals.
+                adminMessage = discordscraper.filterMessageFromAdmins(
+                    lastMessage)
+                if not adminMessage:
+                    print(
+                        f"Message is not from admin, ignoring {lastMessage['content']}")
+                    continue
 
-            # Parse the message
-            messageContent = adminMessage['content']
-            authorId = adminMessage['author']['id']
-            doc = discordscraper.parseSignalCalls(messageContent, authorId)
-            doc = binanceUtils.adjustSignalCallsDigits(doc)
-            doc = binanceUtils.reAdjustBuyRange(doc)
+                # Parse the message
+                messageContent = adminMessage['content']
+                authorId = adminMessage['author']['id']
+                doc = discordscraper.parseSignalCalls(messageContent, authorId)
+                doc = binanceUtils.adjustSignalCallsDigits(doc)
+                doc = binanceUtils.reAdjustBuyRange(doc)
 
-            # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
-            doc['timestamp'] = adminMessage['timestamp']
-            doc['msg_id'] = adminMessage['id']
-            doc['is_active'] = True
-            inserted_doc = mongoUtils.insertSignals(doc)
+                # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
+                doc['timestamp'] = adminMessage['timestamp']
+                doc['msg_id'] = adminMessage['id']
+                doc['is_active'] = True
+                inserted_doc = mongoUtils.insertSignals(doc)
 
-            # Place Buy order
-            binance_res = binanceUtils.placeBuyOrder(doc)
+                # Place Buy order
+                binance_res = binanceUtils.placeBuyOrder(doc)
 
-            # Update the binance buy order response.
-            mongoUtils.updateSignal(inserted_doc['_id'], {
-                "binance_res": binance_res
-            })
+                # Update the binance buy order response.
+                mongoUtils.updateSignal(inserted_doc['_id'], {
+                    "binance_res": binance_res
+                })
 
-            # Place OCO with stop loss
+                if len(binance_res['fills']) > 0:
+                    # Order has been placed
+                    quantityPurchased = float(binance_res['executedQty'])
 
-            # Update mongo as oco_placed=true
+                    # Place OCO with stop loss
+                    sell_oco_Response = binanceUtils.placeOCOSellOrdersForAllTargets(
+                        doc, quantityPurchased)
+
+                    mongoUtils.updateSignal(inserted_doc['_id'], {
+                        "sell_oco_Response": sell_oco_Response
+                    })
+
+            except Exception as e:
+                SystemUtils.error(e)
