@@ -70,11 +70,11 @@ class BinanceUtils(object):
 
             if sellTarget < minAllowedSellPrice:
                 raise Exception(
-                    f'Symbol: "{symbol}" is not buyable as sell target price for target: {target}, quantity: {targetQuantity}, price: {format(sellTarget, ".8f")} < minAllowedSellPrice: {minAllowedSellPrice}')
+                    f'Symbol: "{symbol}" is not buyable, as sell target price for target: {target} - {format(sellTargets[target], ".8f")}, quantity: {targetQuantity}, sell_total_price: {format(sellTarget, ".8f")} < min_allowed_sell_price: {minAllowedSellPrice}')
 
             if stopLossTarget < minAllowedSellPrice:
                 raise Exception(
-                    f'Symbol: "{symbol}" is not buyable as stop loss target price for target: {target}, quantity: {targetQuantity}, stop loss: {format(stopLossTarget, ".8f")} < minAllowedSellPrice: {minAllowedSellPrice}')
+                    f'Symbol: "{symbol}" is not buyable, as stop loss target price for target: {target} - {format(stopLoss, ".8f")}, quantity: {targetQuantity}, stop_loss_total_price: {format(stopLossTarget, ".8f")} < min_allowed_sell_price: {minAllowedSellPrice}')
 
     def placeBuyOrder(self, doc):
         symbol = doc['symbol'] + doc['base_curr']
@@ -133,11 +133,11 @@ class BinanceUtils(object):
             for target in self.oco_targets:
                 quantity = self.oco_targets[target] * quantityPurchased
                 sell_target = format(doc[target], '.8f')
-                print(
-                    f'[SELL-OCO] Placing sell OCO for "{symbol}" at price: {sell_target}, quantity: {quantity} and stop_loss: {stop_loss}')
 
                 stop_price = format(float(stop_loss) +
                                     (float(stop_loss)*0.01), '.8f')
+                print(
+                    f'[SELL-OCO] Symbol: "{symbol}" at sell_price: {sell_target}, quantity: {quantity}, stop_price: {stop_price}, stop_loss: {stop_loss}')
 
                 order = self.client.create_oco_order(
                     symbol=symbol,
@@ -146,7 +146,7 @@ class BinanceUtils(object):
                     quantity=quantity,
                     stopPrice=str(stop_price),
                     stopLimitPrice=stop_loss,
-                    stopLimitTimeInForce='FOK')
+                    stopLimitTimeInForce=self.client.TIME_IN_FORCE_GTC)
 
                 oco_responses.append(order)
         except Exception as e:
