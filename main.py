@@ -1,6 +1,6 @@
 from module import BinanceUtils, DiscordScraper, MongoUtils, SystemUtils
 from os import getcwd, path
-from json import loads
+from json import loads, dumps
 
 
 def getConfigFile(configfile):
@@ -66,6 +66,10 @@ if __name__ == '__main__':
                 # Parse the message
                 messageContent = adminMessage['content']
                 authorId = adminMessage['author']['id']
+
+                discordscraper.sendMessageToStatServer(
+                    "Message from admin: {} picked up!".format(authorId), messageContent)
+
                 doc = discordscraper.parseSignalCalls(messageContent, authorId)
                 doc = binanceUtils.adjustSignalCallsDigits(doc)
                 doc = binanceUtils.reAdjustBuyRange(doc)
@@ -78,6 +82,9 @@ if __name__ == '__main__':
 
                 # Place Buy order
                 binance_res = binanceUtils.placeBuyOrder(doc)
+
+                discordscraper.sendMessageToStatServer(
+                    f"[{binance_res['symbol']}] Buy order placed!", dumps(binance_res['fills']))
 
                 # Update the binance buy order response.
                 mongoUtils.updateSignal(inserted_doc['_id'], {
@@ -92,9 +99,15 @@ if __name__ == '__main__':
                     sell_oco_Response = binanceUtils.placeOCOSellOrdersForAllTargets(
                         doc, quantityPurchased)
 
+                    discordscraper.sendMessageToStatServer(
+                        f"[{binance_res['symbol']}] OCO placed!", dumps(sell_oco_Response))
+
                     mongoUtils.updateSignal(inserted_doc['_id'], {
                         "sell_oco_Response": sell_oco_Response
                     })
 
             except Exception as e:
+                discordscraper.sendMessageToStatServer(
+                    "🔴 ☠️ [ERROR] ☠️ 🔴", str(e))
+
                 SystemUtils.error(e)

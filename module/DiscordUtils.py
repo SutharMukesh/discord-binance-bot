@@ -1,6 +1,7 @@
 from os import getcwd, path
 import json
 import re
+import requests
 
 from .Request import DiscordRequest
 from .SystemUtils import error, warn
@@ -82,6 +83,7 @@ class DiscordScraper(object):
 
         self.servers = config.servers if len(config.servers) > 0 else {}
 
+        self.stats_server = config.stats_server
         # Create a blank server name, channel name, and folder location class variable.
         self.servername = None
         self.channelname = None
@@ -116,7 +118,7 @@ class DiscordScraper(object):
         """
 
         # Generate a valid URL to the documented API function for retrieving channel messages (we don't care about the 100 message limit this time).
-        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=3'.format(
+        lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
             self.apiversion, channel)
 
         # Update the HTTP request headers to set the referer to the current server channel URL.
@@ -196,3 +198,35 @@ class DiscordScraper(object):
                 f'No template matched for message: {json.dumps(message)}')
 
         return parsedMessage
+
+    def sendMessageToStatServer(self, title, description):
+
+        channel = self.stats_server['channelId']
+        server = self.stats_server['guildId']
+
+        # Generate a valid URL to the documented API function for retrieving channel messages (we don't care about the 100 message limit this time).
+        postMessageUrl = 'https://discord.com/api/{0}/channels/{1}/messages'.format(
+            self.apiversion, channel)
+
+        # Update the HTTP request headers to set the referer to the current server channel URL.
+        self.headers.update(
+            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})
+
+        try:
+            messageContent = {
+                "tts": False,
+                "embeds": [{
+                    "title": title,
+                    "description": description
+                }]
+            }
+            response = requests.post(
+                postMessageUrl, json=messageContent, headers=self.headers)
+
+            # If we returned nothing then return nothing.
+            if response is None:
+                return None
+
+            return response.text
+        except Exception as ex:
+            error(ex)
