@@ -26,11 +26,7 @@ def getConfigFile(configfile):
     return config
 
 
-if __name__ == '__main__':
-    """
-    This is the entrypoint for our script since __name__ is going to be set to __main__ by default.
-    """
-
+def start():
     config = getConfigFile('config.json')
 
     # Create a variable that references the Discord Scraper class.
@@ -111,3 +107,10 @@ if __name__ == '__main__':
                     "🔴 ☠️ [ERROR] ☠️ 🔴", str(e))
 
                 SystemUtils.error(e)
+
+
+if __name__ == '__main__':
+    """
+    This is the entrypoint for our script since __name__ is going to be set to __main__ by default.
+    """
+    start()
