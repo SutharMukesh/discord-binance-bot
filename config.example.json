@@ -1,12 +1,26 @@
 {
-    "token_file": "discord.token",
-    "useragent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.309 Chrome/83.0.4103.122 Electron/9.3.5 Safari/537.36",
-    "buffer": 1048576,
-    "connection_string": "mongodb+srv://USER:PASS@HOST/DB?retryWrites=true&w=majority",
+    "connection_string": "mongodb+srv://<USER>:<PASSWORD>@<HOST>/<DB?retryWrites=true&w=majority",
     "binance": {
-        "api_key": "API_KEY",
-        "api_secret": "API_SECRET",
-        "single_buy_order_amount_in_btc": 0.00044
+        "api_key": "<API_KEY>",
+        "api_secret": "<API_SECRET>",
+        "single_buy_order_amount_in_btc": 0.0007
+    },
+    "discord": {
+        "headers": {
+            "user": {
+                "Authorization": "<USER_AUTH_TOKEN>",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.309 Chrome/83.0.4103.122 Electron/9.3.5 Safari/537.36"
+            },
+            "bot": {
+                "Authorization": "Bot <BOT_AUTH_TOKEN>",
+                "User-Agent": "discord-binance-bot (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.309 Chrome/83.0.4103.122 Electron/9.3.5 Safari/537.36"
+            }
+        }
+    },
+    "oco_targets": {
+        "t1": 0.25,
+        "t2": 0.50,
+        "t3": 0.25
     },
     "options": {
         "validateFileHeaders": false,
@@ -27,13 +41,19 @@
             "398075210949066766"
         ]
     },
+    "stats_server": {
+        "guildId": "916944698650800138",
+        "channelId": "916944698650800141"
+    },
     "author_ids": [
         "862346622611750964"
     ],
     "templates": {
         "862346622611750964": [
-            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit - $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
-            "<@&405020161045954600> \n#$symbol/$base_curr at (Binance.com) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss"
+            "<@&405020161045954600> \n#$symbol/$base_curr at ($platform) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit - $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
+            "<@&405020161045954600> \n#$symbol/$base_curr at ($platform) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
+            "<@&405020161045954600>\n#$symbol/$base_curr at ($platform) \n\nWe Buy between $buy_range_1-$buy_range_2\n\nWe Take Profit $t1-$t2-$t3-$t4\n\nStop around - $stop_loss",
+            "<@&405020161045954600>\n#$symbol/$base_curr at ($platform)\n\nWe Buy around $buy_range_1-$buy_range_2\n\nOur Selling Targets - $t1-$t2-$t3-$t4\n\nStop around \u2013 $stop_loss"
         ]
     }
 }

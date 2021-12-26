@@ -32,32 +32,12 @@ class DiscordScraper(object):
             # Set it to the default value of "v8"
             apiversion = 'v8'
 
-        # Generate a direct file path to the authorization token file.
-        tokenfile = path.join(getcwd(), config.token_file)
-
-        # Throw an error if the authorization token file doesn't exist.
-        if not path.exists(tokenfile):
-            error('Authorization token file can not be found at the following location: {0}'.format(
-                tokenfile))
-
-        # Open the authorization token file in text-mode for reading.
-        with open(tokenfile, 'r') as tokenfilestream:
-
-            # Read the first line of the authorization token file.
-            tokenfiledata = tokenfilestream.readline().rstrip()
-
         # Create a dictionary to store the HTTP request headers that we will be using for all requests.
-        self.headers = {
-            # The user-agent string that tells the server which browser, operating system, and rendering engine we're using.
-            'User-Agent': config.useragent,
-            'Authorization': tokenfiledata     # The authorization token that authorizes this script to carry out actions with your account, this script only requires this to access the data on the specified servers and channels for scraping purposes. NEVER UNDER ANY CIRCUMSTANCE SHARE THIS VALUE TO ANYONE YOU DO NOT TRUST!
-        }
+        self.headers = config.discord['headers']
 
         # Create some class variables to store the configuration file data.
         # The backend Discord API version which denotes which API functions are available for use and which are deprecated.
         self.apiversion = apiversion
-        # The file download buffer that will be stored in memory before offloading to the hard drive.
-        self.buffersize = config.buffer
         # The experimental options portion of the configuration file that will give extra control over how the script functions.
         self.options = config.options
         # The file types that we are wanting to scrape and download to our storage device.
@@ -121,13 +101,14 @@ class DiscordScraper(object):
         lastmessage = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
             self.apiversion, channel)
 
+        headers = self.headers["user"]
         # Update the HTTP request headers to set the referer to the current server channel URL.
-        self.headers.update(
+        headers.update(
             {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})
 
         try:
             # Execute the network query to retrieve the JSON data.
-            response = self.requestData(lastmessage, self.headers)
+            response = self.requestData(lastmessage, headers)
 
             # If we returned nothing then return nothing.
             if response is None:
@@ -208,8 +189,9 @@ class DiscordScraper(object):
         postMessageUrl = 'https://discord.com/api/{0}/channels/{1}/messages'.format(
             self.apiversion, channel)
 
+        headers = self.headers["bot"]
         # Update the HTTP request headers to set the referer to the current server channel URL.
-        self.headers.update(
+        headers.update(
             {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})
 
         try:
@@ -221,7 +203,7 @@ class DiscordScraper(object):
                 }]
             }
             response = requests.post(
-                postMessageUrl, json=messageContent, headers=self.headers)
+                postMessageUrl, json=messageContent, headers=headers)
 
             # If we returned nothing then return nothing.
             if response is None:
