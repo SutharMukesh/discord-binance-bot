@@ -2,7 +2,6 @@ import json
 import re
 import requests
 
-from .Request import DiscordRequest
 from .SystemUtils import error, warn
 
 
@@ -33,30 +32,6 @@ class DiscordScraper(object):
         # Create some class variables to store the configuration file data. The backend Discord API version which
         # denotes which API functions are available for use and which are deprecated.
         self.api_version = api_version
-        # The experimental options portion of the configuration file
-        # that will give extra control over how the script functions.
-        self.options = config.options
-        # The file types that we are wanting to scrape and download to our storage device.
-        self.types = config.types
-
-        # Make the options available for quick and easy access.
-        # The option that will not only check the MIME type of file
-        # but go one step further and check the magic number (header) of the file.
-        self.validateFileHeaders = config.options['validateFileHeaders']
-        # The option that will generate a document listing off generated checksums
-        # for each file that was scraped for duplicate detection.
-        self.generateFileChecksums = config.options['generateFileChecksums']
-        # The option that will rename files and folders to avoid as many problems
-        # with filesystem and reserved file names in most operating systems.
-        self.sanitizeFileNames = config.options['sanitizeFileNames']
-        # The option that will enable image file compression to save on storage space when downloading data,
-        # this will likely be a generic algorithm.
-        self.compressImageData = config.options['compressImageData']
-        # The option that will enable textual data compression to save on storage space when downloading data,
-        # this will most likely be GZIP compression.
-        self.compressTextData = config.options['compressTextData']
-        # The option that will determine whether the script should cache the response text in JSON formatting.
-        self.gatherJSONData = config.options['gatherJSONData']
 
         self.author_ids = config.author_ids
 
@@ -65,31 +40,6 @@ class DiscordScraper(object):
         self.servers = config.servers if len(config.servers) > 0 else {}
 
         self.stats_server = config.stats_server
-        # Create a blank server name, channel name, and folder location class variable.
-        self.server_name = None
-        self.channel_name = None
-        self.location = None
-
-    @staticmethod
-    def request_data(url, headers=None):
-        """
-        Make a simplified alias to the Discord Requests send_request class function.
-        :param url: The URL that we want to grab data from.
-        :param headers: The header's dictionary that we want to set.
-        """
-
-        # Determine if the headers are empty, if so then use an empty dictionary.
-        if headers is None:
-            headers = {}
-
-        # Create a request variable.
-        request = DiscordRequest()
-
-        # Set the headers.
-        request.set_headers(headers)
-
-        # Return the response.
-        return request.send_request(url)
 
     def get_last_message_server(self, server, channel):
         """
@@ -100,7 +50,7 @@ class DiscordScraper(object):
 
         # Generate a valid URL to the documented API function for retrieving channel messages
         # (we don't care about the 100 message limit this time).
-        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
+        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=1'.format(
             self.api_version, channel)
 
         headers = self.headers["user"]
@@ -110,14 +60,16 @@ class DiscordScraper(object):
 
         try:
             # Execute the network query to retrieve the JSON data.
-            response = self.request_data(last_message, headers)
+
+            response = requests.get(
+                last_message, headers=headers)
 
             # If we returned nothing then return nothing.
             if response is None:
                 return None
 
-            # Read the response data and convert it into a dictionary object.
-            data = json.loads(response.read())
+            # Read the response text and convert it into a dictionary object.
+            data = json.loads(response.text)
 
             return data[-1]
         except Exception as ex:

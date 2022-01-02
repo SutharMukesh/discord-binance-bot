@@ -22,20 +22,6 @@
         "t2": 0.50,
         "t3": 0.25
     },
-    "options": {
-        "validateFileHeaders": false,
-        "generateFileChecksums": false,
-        "sanitizeFileNames": true,
-        "compressImageData": false,
-        "compressTextData": false,
-        "gatherJSONData": true
-    },
-    "types": {
-        "images": false,
-        "videos": false,
-        "files": false,
-        "text": true
-    },
     "servers": {
         "398075210949066764": [
             "398075210949066766"
