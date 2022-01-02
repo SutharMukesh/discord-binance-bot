@@ -3,38 +3,38 @@ from os import getcwd, path
 from json import loads, dumps
 
 
-def getConfigFile(configfile):
+def get_config_file(configfile):
     # Generate a direct file path to the configuration file.
     configfile = path.join(getcwd(), configfile)
 
     # Throw an error if the configuration file doesn't exist.
     if not path.exists(configfile):
-        DiscordScraper.error('Configuration file can not be found at the following location: {0}'.format(
+        SystemUtils.error('Configuration file can not be found at the following location: {0}'.format(
             configfile))
 
     # Open the config file in text-mode for reading.
-    with open(configfile, 'r') as configfilestream:
+    with open(configfile, 'r') as config_file_stream:
 
         # Read the entire config file.
-        configfiledata = configfilestream.read()
+        config_file_data = config_file_stream.read()
 
     # Convert the serialized JSON contents of the configuration file into a dictionary.
-    configdata = loads(configfiledata)
+    config_data = loads(config_file_data)
 
     # Convert the configuration dictionary into a class object.
-    config = type('DiscordConfig', (object, ), configdata)()
+    config = type('DiscordConfig', (object, ), config_data)()
     return config
 
 
 def start():
-    config = getConfigFile('config.json')
+    config = get_config_file('config.json')
 
     # Create a variable that references the Discord Scraper class.
-    discordscraper = DiscordScraper(config)
-    mongoUtils = MongoUtils(config)
-    binanceUtils = BinanceUtils(config)
+    discord_scraper = DiscordScraper(config)
+    mongo_utils = MongoUtils(config)
+    binance_utils = BinanceUtils(config)
     # Iterate through the servers to scrape.
-    for server, channels in discordscraper.servers.items():
+    for server, channels in discord_scraper.servers.items():
 
         # Iterate through the channels to scrape in the server.
         for channel in channels:
@@ -43,67 +43,67 @@ def start():
                 Get "bought=False and is_placed=True" records from mongo.
                 Check if these records are bought on binance
                 if Bought then update as bought=True
-                then put the OCO sell order with stoploss
+                then put the OCO sell order with stop_loss
                 update OCO_placed=True
                 '''
 
                 # GET Last message from the channel
-                lastMessage = discordscraper.getLastMessageServer(
+                last_message = discord_scraper.get_last_message_server(
                     server, channel)
 
                 # Check if that message is from admin/ or the author which gives us signals.
-                adminMessage = discordscraper.filterMessageFromAdmins(
-                    lastMessage)
-                if not adminMessage:
+                admin_message = discord_scraper.filter_message_from_admins(
+                    last_message)
+                if not admin_message:
                     print(
-                        f"Message is not from admin, ignoring {lastMessage['content']}")
+                        f"Message is not from admin, ignoring {last_message['content']}")
                     continue
 
                 # Parse the message
-                messageContent = adminMessage['content']
-                authorId = adminMessage['author']['id']
+                message_content = admin_message['content']
+                author_id = admin_message['author']['id']
 
-                discordscraper.sendMessageToStatServer(
-                    "Message from admin: {} picked up!".format(authorId), messageContent)
+                discord_scraper.send_message_to_stat_server(
+                    "Message from admin: {} picked up!".format(author_id), message_content)
 
-                doc = discordscraper.parseSignalCalls(messageContent, authorId)
-                doc = binanceUtils.adjustSignalCallsDigits(doc)
-                doc = binanceUtils.reAdjustBuyRange(doc)
+                doc = discord_scraper.parse_signal_calls(message_content, author_id)
+                doc = binance_utils.adjust_signal_calls_digits(doc)
+                doc = binance_utils.re_adjust_buy_range(doc)
 
                 # B4 placing buy order, we insert this doc to mongo, just so we know that this signal was attempted
-                doc['timestamp'] = adminMessage['timestamp']
-                doc['msg_id'] = adminMessage['id']
+                doc['timestamp'] = admin_message['timestamp']
+                doc['msg_id'] = admin_message['id']
                 doc['is_active'] = True
-                inserted_doc = mongoUtils.insertSignals(doc)
+                inserted_doc = mongo_utils.insert_signals(doc)
 
                 # Place Buy order
-                binance_res = binanceUtils.placeBuyOrder(doc)
+                binance_res = binance_utils.place_buy_order(doc)
 
-                discordscraper.sendMessageToStatServer(
+                discord_scraper.send_message_to_stat_server(
                     f"[{binance_res['symbol']}] Buy order placed!", dumps(binance_res['fills']))
 
                 # Update the binance buy order response.
-                mongoUtils.updateSignal(inserted_doc['_id'], {
+                mongo_utils.update_signal(inserted_doc['_id'], {
                     "binance_res": binance_res
                 })
 
                 if len(binance_res['fills']) > 0:
                     # Order has been placed
-                    quantityPurchased = float(binance_res['executedQty'])
+                    quantity_purchased = float(binance_res['executedQty'])
 
                     # Place OCO with stop loss
-                    sell_oco_Response = binanceUtils.placeOCOSellOrdersForAllTargets(
-                        doc, quantityPurchased)
+                    sell_oco_response = binance_utils.place_oco_sell_orders_for_all_targets(
+                        doc, quantity_purchased)
 
-                    discordscraper.sendMessageToStatServer(
-                        f"[{binance_res['symbol']}] OCO placed!", dumps(sell_oco_Response))
+                    discord_scraper.send_message_to_stat_server(
+                        f"[{binance_res['symbol']}] OCO placed!", dumps(sell_oco_response))
 
-                    mongoUtils.updateSignal(inserted_doc['_id'], {
-                        "sell_oco_Response": sell_oco_Response
+                    mongo_utils.update_signal(inserted_doc['_id'], {
+                        "sell_oco_response": sell_oco_response
                     })
 
             except Exception as e:
-                discordscraper.sendMessageToStatServer(
+                discord_scraper.send_message_to_stat_server(
                     "🔴 ☠️ [ERROR] ☠️ 🔴", str(e))
 
                 SystemUtils.error(e)

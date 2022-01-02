@@ -1,19 +1,19 @@
-from sys import stderr
-from os import _exit as exit
+from sys import stderr, exit
 from signal import SIGINT, signal
 
 
-def sigintEvent(sig, frame):
-    print('You pressed CTRL + C')
+def sigint_event(sig, frame):
+    print(f'You pressed CTRL + C, Signal: {sig}, frame: {frame}')
     exit(0)
 
 
-signal(SIGINT, sigintEvent)
+signal(SIGINT, sigint_event)
 
 
 def error(message):
     """
     Throw an error message and then halt the script.
+
     :param message: A string that will be printed out to STDERR before exiting the script.
     """
 
@@ -24,6 +24,7 @@ def error(message):
 def warn(message):
     """
     Throw a warning message without halting the script.
+
     :param message: A string that will be printed out to STDERR.
     """
 

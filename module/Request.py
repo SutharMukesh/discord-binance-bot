@@ -27,7 +27,7 @@ class DiscordRequest(object):
         # Create a blank dictionary to serve as our request header class variable.
         self.headers = {}
 
-    def setHeaders(self, headers):
+    def set_headers(self, headers):
         """
         Set the request headers for this request.
         :param headers: The dictionary that stores our header names and values.
@@ -36,20 +36,20 @@ class DiscordRequest(object):
         # Create and set the class variable to store our headers.
         self.headers = headers
 
-    def sendRequest(self, url):
+    def send_request(self, url):
         """
         Send a request to the target URL and return the response data.
         :param url: The URL to the target that we're wanting to grab data from.
         """
 
         # Split the URL into parts.
-        urlparts = url.split('/')
+        url_parts = url.split('/')
 
-        # Grab the URL path from the urlparts.
-        urlpath = '/{0}'.format('/'.join(urlparts[3:]))
+        # Grab the URL path from the url_parts.
+        urlpath = '/{0}'.format('/'.join(url_parts[3:]))
 
         # Create a reference to the HTTPSConnection class.
-        connection = HTTPSConnection(urlparts[2], 443)
+        connection = HTTPSConnection(url_parts[2], 443)
 
         # Request the data from the connection.
         connection.request('GET', urlpath, headers=self.headers)
@@ -57,7 +57,6 @@ class DiscordRequest(object):
         # Retrieve the response from the request.
         response = connection.getresponse()
 
-        # TODO: Remove this before releasing
         for header in response.getheaders():
             if header[0] == 'Retry-After':
                 print(header)
@@ -77,12 +76,12 @@ class DiscordRequest(object):
 
             # If the domain is a part of Discord then re-run this function.
             if domain in ['discordapp.com', 'discord.com']:
-                self.sendRequest(url)
+                self.send_request(url)
 
             # Throw a warning message to acknowledge an untrusted redirect.
             warn('Ignored unsafe redirect to {0}.'.format(url))
 
-        # Otherwise throw a warning message to acknowledge a failed connection.
+        # Otherwise, throw a warning message to acknowledge a failed connection.
         else:
             warn('HTTP {0} from {1}.'.format(response.status, url))
 
@@ -93,7 +92,7 @@ class DiscordRequest(object):
             if retry_after:
                 # Sleep for 1 extra second as buffer
                 sleep(1 + retry_after)
-                return sendRequest(self, url)
+                return self.send_request(url)
 
         # Return nothing to signify a failed request.
         return None

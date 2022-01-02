@@ -3,7 +3,7 @@ from pymongo import MongoClient
 
 class MongoUtils(object):
     """
-    This class will contain all of the important functions that will be used that works with both Python 2 and Python 3 interpreters.
+    This class talks with mongo db.
     """
 
     def __init__(self, config):
@@ -12,8 +12,7 @@ class MongoUtils(object):
         self.signal_collection = 'signals'
         self.db = None
 
-    @staticmethod
-    def getDb(self, databaseName):
+    def get_db(self, database_name):
         """
         Gets db instance
         it will instantiate the client for the first call
@@ -23,55 +22,55 @@ class MongoUtils(object):
             return self.db
 
         client = MongoClient(self.connection_string)
-        db = client[databaseName]
+        db = client[database_name]
         self.db = db
         return db
 
-    def insertSignals(self, doc):
+    def insert_signals(self, doc):
         """
         Insert signal info into mongo db
         """
 
-        db = self.getDb(self, self.database_name)
+        db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
 
-        existingDoc = self.getSignal({"msg_id": doc['msg_id']})
-        if existingDoc:
-            return existingDoc
+        existing_doc = self.get_signal({"msg_id": doc['msg_id']})
+        if existing_doc:
+            return existing_doc
 
         inserted = collection.insert_one(doc)
         doc['_id'] = inserted.inserted_id
         return doc
 
-    def getSignal(self, filter_obj):
+    def get_signal(self, filter_obj):
         """
         Get signal info from mongo db
         """
 
-        db = self.getDb(self, self.database_name)
+        db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
 
         return collection.find_one(filter_obj)
 
-    def getAllPendingBuySignals(self):
+    def get_all_pending_buy_signals(self):
         """
         Get all open orders
         """
-        db = self.getDb(self, self.database_name)
+        db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
 
         return collection.find({
             "bought": False
         })
 
-    def updateSignal(self, _id, updateDoc):
+    def update_signal(self, _id, update_doc):
         """
         Update a signal doc
         """
 
-        db = self.getDb(self, self.database_name)
+        db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
 
         return collection.update({
             "_id": _id
-        }, updateDoc)
+        }, update_doc)
