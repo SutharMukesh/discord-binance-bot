@@ -1,35 +1,17 @@
 import json
 
-from module import BinanceUtils, DiscordUtils, MongoUtils, SystemUtils
-from os import getcwd, path
-from jsmin import jsmin
-
-
-def get_config_file(configfile):
-    # Generate a direct file path to the configuration file.
-    configfile = path.join(getcwd(), configfile)
-
-    # Throw an error if the configuration file doesn't exist.
-    if not path.exists(configfile):
-        SystemUtils.error('Configuration file can not be found at the following location: {0},'
-                          ' duplicate config.example.yaml and rename it to config.yaml'.format(configfile))
-
-    # Open the config file in text-mode for reading.
-    with open(configfile, 'r') as config_file_stream:
-        # Read and parse the entire config file.
-        config_raw_data = config_file_stream.read()
-        config_data = json.loads(jsmin(config_raw_data))
-
-    return config_data
+from module import BinanceUtils, DiscordUtils, MongoUtils, Logger, CommonUtils
 
 
 def start():
-    config = get_config_file('config.json')
+    config = CommonUtils.get_config_file('config.json')
+    logger = Logger(config)
 
     # Initialize all modules
-    discord_utils = DiscordUtils(config)
+
+    discord_utils = DiscordUtils(config, logger)
     mongo_utils = MongoUtils(config)
-    binance_utils = BinanceUtils(config)
+    binance_utils = BinanceUtils(config, logger)
 
     # Iterate through the signal_servers.
     for server_obj in discord_utils.signal_servers:
@@ -67,9 +49,9 @@ def start():
                 # Parse the message
                 message_content = admin_message['content']
                 author_id = admin_message['author']['id']
+                author_username = admin_message['author']['username']
 
-                discord_utils.send_message_to_stat_server(
-                    "Message from admin: {} picked up!".format(author_id), message_content)
+                logger.info(f"[PICKED-UP] Message from author: {author_username}", message_content)
 
                 # Filter message templates for current author id.
                 message_templates = list(filter(lambda x: x['author_id'] == author_id, author_ids))[0][
@@ -88,8 +70,7 @@ def start():
                 # Place Buy order
                 binance_res = binance_utils.place_buy_order(doc, oco_targets)
 
-                discord_utils.send_message_to_stat_server(
-                    f"[{binance_res['symbol']}] Buy order placed!", json.dumps(binance_res['fills']))
+                logger.info(f"[{binance_res['symbol']}] (BOUGHT) ", json.dumps(binance_res['fills']))
 
                 # Update the binance buy order response.
                 mongo_utils.update_signal(inserted_doc['_id'], {
@@ -109,28 +90,22 @@ def start():
                             "sell_oco_response": sell_oco_response
                         })
 
-                        discord_utils.send_message_to_stat_server(
-                            f"[{binance_res['symbol']}] OCO placed!", json.dumps(sell_oco_response))
+                        logger.info(
+                            f"[{binance_res['symbol']}] (OCO-PLACED)", json.dumps(sell_oco_response))
 
                     except Exception as e:
-                        SystemUtils.error(e)
-                        discord_utils.send_message_to_stat_server("🔴 [OCO-ERROR] 🔴",
-                                                                  f"when placing OCO for [{binance_res['symbol']}],"
-                                                                  f" error: {str(e)}")
-                        print(
-                            f"[SELL-MARKET] selling symbol: \"{binance_res['symbol']}\" "
+                        logger.error(f"[{binance_res['symbol']}] (OCO-ERROR)", str(e))
+                        logger.info(
+                            f"[{binance_res['symbol']}] (SELL-MARKET)",
                             f"at market price for quantity: {quantity_purchased}")
 
                         sell_order = binance_utils.place_market_sell_order(doc, quantity_purchased)
-                        discord_utils.send_message_to_stat_server(
-                            f"[{binance_res['symbol']}] SELL AT MARKET PRICE!",
-                            f"Sold at market price for quantity: {quantity_purchased}, order: {sell_order}")
+                        logger.info(
+                            f"[{binance_res['symbol']}] (SOLD-MARKET)",
+                            f"at market price for quantity: {quantity_purchased}, order: {sell_order}")
 
             except Exception as e:
-                discord_utils.send_message_to_stat_server(
-                    "🔴 ☠️ [ERROR] ☠️ 🔴", str(e))
-
-                SystemUtils.error(e)
+                logger.error("🔴 ☠️ (ERROR) ☠️ 🔴", str(e))
 
 
 if __name__ == '__main__':

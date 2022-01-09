@@ -1,5 +1,4 @@
 from binance import Client
-from .SystemUtils import warn, error
 
 BINANCE_BTC_BASE_DIGITS = 0.00000001
 
@@ -9,15 +8,15 @@ class BinanceUtils(object):
     This class talks with binance server.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, logger):
         self.api_key = config['binance']['api_key']
         self.api_secret = config['binance']['api_secret']
         self.single_buy_order_amount_in_btc = config['binance']['single_buy_order_amount_in_btc']
 
         self.client = Client(self.api_key, self.api_secret)
+        self.logger = logger
 
-    @staticmethod
-    def adjust_signal_calls_digits(doc):
+    def adjust_signal_calls_digits(self, doc):
         """
             ! This function only adjust BTC based signals !
             Normally the signals tend to give only the trailing number from a price
@@ -32,8 +31,8 @@ class BinanceUtils(object):
             for keyword in doc:
                 if keyword in supported_signal_keywords:
                     if int(doc[keyword]) < 1:
-                        warn(
-                            f'cannot adjust {keyword}: {doc[keyword]} as it is < 1')
+                        self.logger.warn(f'adjust_signal_calls_digits',
+                                         f'cannot adjust {keyword}: {doc[keyword]} as it is < 1')
                         continue
                     doc[keyword] = BINANCE_BTC_BASE_DIGITS * int(doc[keyword])
         return doc
@@ -98,7 +97,7 @@ class BinanceUtils(object):
             stop_loss=doc['stop_loss'],
             oco_targets=oco_targets)
 
-        if symbol_current_price <= doc['buy_low']:
+        if symbol_current_price <= doc['buy_low'] or symbol_current_price >= doc['buy_high']:
             raise Exception(
                 f'Buy order not placed for "{symbol}" '
                 f'as currentPrice: {format(symbol_current_price, ".8f")} '
@@ -107,8 +106,8 @@ class BinanceUtils(object):
         buy_quantity = int(
             self.single_buy_order_amount_in_btc / float(symbol_current_price))
 
-        print(
-            f'[BUY] placing buy order for "{symbol}", '
+        self.logger.info(
+            f'[{symbol}] (BUY)',
             f'at currentPrice: {format(symbol_current_price, ".8f")} for quantity {buy_quantity}')
 
         order = self.client.create_order(
@@ -128,7 +127,6 @@ class BinanceUtils(object):
         # 'executedQty': '0.00000000', 'cummulativeQuoteQty': '0.00000000', 'status': 'NEW', 'timeInForce': 'GTC',
         # 'type': 'LIMIT', 'side': 'BUY', 'fills': []}
 
-        # print(order)
         return order
 
     def place_market_sell_order(self, doc, quantity_purchased):
@@ -140,7 +138,7 @@ class BinanceUtils(object):
             quantity=quantity_purchased)
         return order
 
-    def place_oco_sell_orders_for_all_targets(self, doc, quantity_purchased,oco_targets):
+    def place_oco_sell_orders_for_all_targets(self, doc, quantity_purchased, oco_targets):
         """
         Place OCO sell orders for top 3 targets given in signals
         Sell distribution is 25-50-20
@@ -157,9 +155,9 @@ class BinanceUtils(object):
 
             stop_price = format(float(stop_loss) +
                                 (float(stop_loss) * 0.01), '.8f')
-            print(
-                f'[SELL-OCO] Symbol: "{symbol}" at sell_price: {sell_target}, '
-                f'quantity: {quantity}, stop_price: {stop_price}, stop_loss: {stop_loss}')
+            self.logger.info(
+                f'[{symbol}] (SELL-OCO)',
+                f'at sell_price: {sell_target}, quantity: {quantity}, stop_price: {stop_price}, stop_loss: {stop_loss}')
 
             order = self.client.create_oco_order(
                 symbol=symbol,

@@ -2,3 +2,4 @@
 from .DiscordUtils import DiscordUtils
 from .MongoUtils import MongoUtils
 from .BinanceUtils import BinanceUtils
+from .Logger import Logger

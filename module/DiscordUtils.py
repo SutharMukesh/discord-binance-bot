@@ -2,7 +2,8 @@ import json
 import re
 import requests
 
-from .SystemUtils import error, warn
+
+# from .Logger import Logger
 
 
 class DiscordUtils(object):
@@ -10,7 +11,7 @@ class DiscordUtils(object):
     This class talks with discord servers.
     """
 
-    def __init__(self, config, api_version=None):
+    def __init__(self, config, logger, api_version=None):
         """
         The class constructor function that is not needed for calling any of the static functions.
         :param self: A reference to the class object that will be used to call any non-static functions in this class.
@@ -33,6 +34,7 @@ class DiscordUtils(object):
             config['discord']['signal_servers']) > 0 else []
 
         self.bot_stats_server = config['discord']['bot_stats_server']
+        self.logger = logger
 
     def get_last_message_server(self, server_id, channel_id, headers):
         """
@@ -44,7 +46,7 @@ class DiscordUtils(object):
 
         # Generate a valid URL to the documented API function for retrieving channel messages
         # (we don't care about the 100 message limit this time).
-        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
+        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=1'.format(
             self.api_version, channel_id)
 
         if not headers:
@@ -120,8 +122,8 @@ class DiscordUtils(object):
                 parsed_message = self.match_data_using_template(template, message)
                 break
             except Exception as e:
-                warn(
-                    f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}; error: {e}')
+                print(
+                    f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}', f'error: {e}')
 
         if not parsed_message:
             raise Exception(
@@ -163,4 +165,4 @@ class DiscordUtils(object):
 
             return response.text
         except Exception as ex:
-            error(ex)
+            self.logger.error('Error while sending message to bot_stats_server', str(ex))
