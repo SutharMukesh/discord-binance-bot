@@ -1,5 +1,5 @@
 # Discord Binance Bot
-A bot which watches for new signals from a discord channel and place the order on binance with OCO targets.
+A bot which watches for new signals from any discord channel and place the order on binance with OCO targets.
 
 ### Setup Python virtual environment for the project & activate it.
  - Linux
@@ -17,12 +17,7 @@ A bot which watches for new signals from a discord channel and place the order o
    pip install -r requirements.txt
    ```
 
-# Fix, if needed
-1. `ImportError: cannot import name 'Client' from 'binance'`
+### Configurations
 
-   - Uninstall, Reinstall, Upgrade the package
-    ```python
-    python -m pip uninstall python-binance
-    python -m pip install python-binance
-    python -m pip install --upgrade python-binance
-    ```
+- Create a copy of `config.example.json` and rename it to `config.json`
+- Replace all <KEYS> with appropriate values.

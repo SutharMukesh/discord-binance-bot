@@ -5,7 +5,7 @@ import requests
 from .SystemUtils import error, warn
 
 
-class DiscordScraper(object):
+class DiscordUtils(object):
     """
     This class talks with discord servers.
     """
@@ -22,69 +22,68 @@ class DiscordScraper(object):
 
         # Determine if the api_version argument is not set.
         if api_version is None:
-
             # Set it to the default value of "v8"
             api_version = 'v8'
-
-        # Create a dictionary to store the HTTP request headers that we will be using for all requests.
-        self.headers = config.discord['headers']
 
         # Create some class variables to store the configuration file data. The backend Discord API version which
         # denotes which API functions are available for use and which are deprecated.
         self.api_version = api_version
 
-        self.author_ids = config.author_ids
+        self.signal_servers = config['discord']['signal_servers'] if len(
+            config['discord']['signal_servers']) > 0 else []
 
-        self.templates = config.templates
+        self.bot_stats_server = config['discord']['bot_stats_server']
 
-        self.servers = config.servers if len(config.servers) > 0 else {}
-
-        self.stats_server = config.stats_server
-
-    def get_last_message_server(self, server, channel):
+    def get_last_message_server(self, server_id, channel_id, headers):
         """
         Use the official Discord API to retrieve the last publicly viewable message in a channel.
-        :param server: The ID for the server that we're wanting to scrape from.
-        :param channel: The ID for the channel that we're wanting to scrape from.
+        :param server_id: The ID for the server that we're wanting to scrape from.
+        :param channel_id: The ID for the channel that we're wanting to scrape from.
+        :param headers: required Headers to make a call with discord
         """
 
         # Generate a valid URL to the documented API function for retrieving channel messages
         # (we don't care about the 100 message limit this time).
-        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=1'.format(
-            self.api_version, channel)
+        last_message = 'https://discord.com/api/{0}/channels/{1}/messages?limit=2'.format(
+            self.api_version, channel_id)
 
-        headers = self.headers["user"]
+        if not headers:
+            raise Exception(f'Cannot get last message from server {server_id} '
+                            f'and channel {channel_id} as no headers were found!')
+
         # Update the HTTP request headers to set the referer to the current server channel URL.
         headers.update(
-            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})
+            {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server_id, channel_id)})
 
-        try:
-            # Execute the network query to retrieve the JSON data.
+        # Execute the network query to retrieve the JSON data.
 
-            response = requests.get(
-                last_message, headers=headers)
+        response = requests.get(
+            last_message, headers=headers)
 
-            # If we returned nothing then return nothing.
-            if response is None:
-                return None
+        # If we returned nothing then return nothing.
+        if response is None:
+            return None
 
-            # Read the response text and convert it into a dictionary object.
-            data = json.loads(response.text)
+        # Read the response text and convert it into a dictionary object.
+        data = json.loads(response.text)
 
-            return data[-1]
-        except Exception as ex:
-            error(ex)
+        return data[-1]
 
-    def filter_message_from_admins(self, message):
+    @staticmethod
+    def filter_message_from_admins(message, author_ids):
         """
         return the same message, if its from admin or else it returns None
         :param message: object or list<object> of discord message
+        :param author_ids: list<object> of author objects.
         """
 
         def is_message_from_admin(single_message):
             author = single_message['author']['id']
-            if author in self.author_ids:
-                return True
+
+            for author_obj in author_ids:
+                author_id = author_obj['author_id']
+                if author == author_id:
+                    return True
             else:
                 return False
 
@@ -108,21 +107,15 @@ class DiscordScraper(object):
         match = re.match(pattern, message)
         return match.groupdict()
 
-    def parse_signal_calls(self, message, author_id):
+    def parse_signal_calls(self, message, message_templates):
         """
         Parse a message with the configured template against an admin id
-        :param author_id: parse message only sent from an author_id
         :param message: a message to be parsed
+        :param message_templates: Supporting multiple templates, as admin/author can send a message in different formats.
         :return: parsed json
         """
-
-        if author_id not in self.templates.keys():
-            return None
-
-        # Supporting multiple templates, as admin/author can send a message in different formats.
-        templates = self.templates[author_id]
         parsed_message = None
-        for template in templates:
+        for template in message_templates:
             try:
                 parsed_message = self.match_data_using_template(template, message)
                 break
@@ -137,16 +130,18 @@ class DiscordScraper(object):
         return parsed_message
 
     def send_message_to_stat_server(self, title, description):
+        if not self.bot_stats_server['enable']:
+            return
 
-        channel = self.stats_server['channelId']
-        server = self.stats_server['guildId']
+        channel = self.bot_stats_server['channel_id']
+        server = self.bot_stats_server['server_id']
 
         # Generate a valid URL to the documented API function for retrieving channel messages
         # (we don't care about the 100 message limit this time).
         post_message_url = 'https://discord.com/api/{0}/channels/{1}/messages'.format(
             self.api_version, channel)
 
-        headers = self.headers["bot"]
+        headers = self.bot_stats_server["headers"]
         # Update the HTTP request headers to set the referer to the current server channel URL.
         headers.update(
             {'Referer': 'https://discord.com/channels/{0}/{1}'.format(server, channel)})

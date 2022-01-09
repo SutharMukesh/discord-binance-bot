@@ -1,5 +1,6 @@
 from binance import Client
 from .SystemUtils import warn, error
+
 BINANCE_BTC_BASE_DIGITS = 0.00000001
 
 
@@ -9,12 +10,11 @@ class BinanceUtils(object):
     """
 
     def __init__(self, config):
-        self.api_key = config.binance['api_key']
-        self.api_secret = config.binance['api_secret']
-        self.single_buy_order_amount_in_btc = config.binance['single_buy_order_amount_in_btc']
+        self.api_key = config['binance']['api_key']
+        self.api_secret = config['binance']['api_secret']
+        self.single_buy_order_amount_in_btc = config['binance']['single_buy_order_amount_in_btc']
 
         self.client = Client(self.api_key, self.api_secret)
-        self.oco_targets = config.oco_targets
 
     @staticmethod
     def adjust_signal_calls_digits(doc):
@@ -56,16 +56,16 @@ class BinanceUtils(object):
         info = self.client.get_symbol_ticker(symbol=symbol)
         return float(info['price'])
 
-    def can_we_buy_it(self, symbol, current_price, sell_targets, stop_loss):
+    def can_we_buy_it(self, symbol, current_price, sell_targets, stop_loss, oco_targets):
         symbol_info = self.client.get_symbol_info(symbol=symbol)
 
         min_notional = list(filter(
             lambda x: x['filterType'] == 'MIN_NOTIONAL', symbol_info['filters']))
         min_allowed_sell_price = float(min_notional[0]['minNotional'])
 
-        for target in self.oco_targets:
+        for target in oco_targets:
             quantity_to_be_purchased = self.single_buy_order_amount_in_btc / current_price
-            target_quantity = self.oco_targets[target] * quantity_to_be_purchased
+            target_quantity = oco_targets[target] * quantity_to_be_purchased
 
             sell_target = sell_targets[target] * target_quantity
             stop_loss_target = stop_loss * target_quantity
@@ -86,15 +86,19 @@ class BinanceUtils(object):
                     f'stop_loss_total_price: '
                     f'{format(stop_loss_target, ".8f")} < min_allowed_sell_price: {min_allowed_sell_price}')
 
-    def place_buy_order(self, doc):
+    def place_buy_order(self, doc, oco_targets):
         symbol = doc['symbol'] + doc['base_curr']
 
         symbol_current_price = self.get_current_price(symbol)
 
         self.can_we_buy_it(
-            symbol=symbol, current_price=symbol_current_price, sell_targets=doc, stop_loss=doc['stop_loss'])
+            symbol=symbol,
+            current_price=symbol_current_price,
+            sell_targets=doc,
+            stop_loss=doc['stop_loss'],
+            oco_targets=oco_targets)
 
-        if symbol_current_price <= doc['buy_low'] or symbol_current_price >= doc['buy_high']:
+        if symbol_current_price <= doc['buy_low']:
             raise Exception(
                 f'Buy order not placed for "{symbol}" '
                 f'as currentPrice: {format(symbol_current_price, ".8f")} '
@@ -136,7 +140,7 @@ class BinanceUtils(object):
             quantity=quantity_purchased)
         return order
 
-    def place_oco_sell_orders_for_all_targets(self, doc, quantity_purchased):
+    def place_oco_sell_orders_for_all_targets(self, doc, quantity_purchased,oco_targets):
         """
         Place OCO sell orders for top 3 targets given in signals
         Sell distribution is 25-50-20
@@ -146,31 +150,26 @@ class BinanceUtils(object):
 
         stop_loss = format(doc['stop_loss'], '.8f')
         oco_responses = []
-        try:
-            for target in self.oco_targets:
-                quantity = self.oco_targets[target] * quantity_purchased
-                sell_target = format(doc[target], '.8f')
 
-                stop_price = format(float(stop_loss) +
-                                    (float(stop_loss)*0.01), '.8f')
-                print(
-                    f'[SELL-OCO] Symbol: "{symbol}" at sell_price: {sell_target}, '
-                    f'quantity: {quantity}, stop_price: {stop_price}, stop_loss: {stop_loss}')
+        for target in oco_targets:
+            quantity = oco_targets[target] * quantity_purchased
+            sell_target = format(doc[target], '.8f')
 
-                order = self.client.create_oco_order(
-                    symbol=symbol,
-                    side=self.client.SIDE_SELL,
-                    price=sell_target,
-                    quantity=quantity,
-                    stopPrice=str(stop_price),
-                    stopLimitPrice=stop_loss,
-                    stopLimitTimeInForce=self.client.TIME_IN_FORCE_GTC)
-
-                oco_responses.append(order)
-        except Exception as e:
-            error(e)
+            stop_price = format(float(stop_loss) +
+                                (float(stop_loss) * 0.01), '.8f')
             print(
-                f'[SELL-MARKET] selling symbol: "{symbol}" at market price for quantity: {quantity_purchased}')
-            self.place_market_sell_order(doc, quantity_purchased)
+                f'[SELL-OCO] Symbol: "{symbol}" at sell_price: {sell_target}, '
+                f'quantity: {quantity}, stop_price: {stop_price}, stop_loss: {stop_loss}')
+
+            order = self.client.create_oco_order(
+                symbol=symbol,
+                side=self.client.SIDE_SELL,
+                price=sell_target,
+                quantity=quantity,
+                stopPrice=str(stop_price),
+                stopLimitPrice=stop_loss,
+                stopLimitTimeInForce=self.client.TIME_IN_FORCE_GTC)
+
+            oco_responses.append(order)
 
         return oco_responses

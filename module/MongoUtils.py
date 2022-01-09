@@ -7,7 +7,8 @@ class MongoUtils(object):
     """
 
     def __init__(self, config):
-        self.connection_string = config.connection_string
+        self.enable = config['mongo_db']['enable']
+        self.connection_string = config['mongo_db']['connection_string']
         self.database_name = 'discord_binance'
         self.signal_collection = 'signals'
         self.db = None
@@ -18,6 +19,9 @@ class MongoUtils(object):
         it will instantiate the client for the first call
         then it will get it from self object.
         """
+        if not self.enable:
+            return
+
         if self.db:
             return self.db
 
@@ -30,6 +34,8 @@ class MongoUtils(object):
         """
         Insert signal info into mongo db
         """
+        if not self.enable:
+            return
 
         db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
@@ -46,6 +52,8 @@ class MongoUtils(object):
         """
         Get signal info from mongo db
         """
+        if not self.enable:
+            return
 
         db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
@@ -56,6 +64,9 @@ class MongoUtils(object):
         """
         Get all open orders
         """
+        if not self.enable:
+            return
+
         db = self.get_db(self.database_name)
         collection = db[self.signal_collection]
 
@@ -67,6 +78,8 @@ class MongoUtils(object):
         """
         Update a signal doc
         """
+        if not self.enable:
+            return
 
         db = self.get_db(self.database_name)
         collection = db[self.signal_collection]

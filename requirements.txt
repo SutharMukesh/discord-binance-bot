@@ -1,4 +1,5 @@
-python-binance==0.3
 pymongo==4.0.1
 # pymongo[srv]==1.16.0
 requests~=2.26.0
+
+jsmin~=3.0.0
