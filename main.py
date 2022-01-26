@@ -3,7 +3,7 @@ import json
 from module import BinanceUtils, DiscordUtils, MongoUtils, Logger, CommonUtils
 
 
-def start():
+def start(data, context):
     config = CommonUtils.get_config_file('config.json')
     logger = Logger(config)
 
