@@ -11,14 +11,19 @@ from logging.handlers import TimedRotatingFileHandler
 
 class Logger(object):
     def __init__(self, config):
-        # format the log entries
-        formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 
-        handler = TimedRotatingFileHandler('./logs/script.log', when='midnight')
-        handler.setFormatter(formatter)
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(handler)
         self.logger.setLevel(logging.DEBUG)
+
+        save_to_file = config['logger']['save_to_file']
+        if save_to_file:
+            # format the log entries
+            formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+
+            handler = TimedRotatingFileHandler('./logs/script.log', when='midnight')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+
 
         if not config:
             config = get_config_file('config.json')

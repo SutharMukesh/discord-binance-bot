@@ -3,8 +3,12 @@
     // Api Key and secret - Get it from https://www.binance.com/en-IN/support/faq/360002502072
     "api_key": "<API_KEY>",
     "api_secret": "<API_SECRET>",
+
     // An Amount in BTC you want to spend against a single order.
     "single_buy_order_amount_in_btc": 0.0007
+  },
+  "logger": {
+    "save_to_file": true
   },
   // Save signal activities and stats to mongo db.
   "mongo_db": {
