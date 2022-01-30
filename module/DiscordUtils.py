@@ -126,8 +126,9 @@ class DiscordUtils(object):
                     f'Template: {json.dumps(template)} doesn\'t work for message: {json.dumps(message)}', f'error: {e}')
 
         if not parsed_message:
+            new_line_templates = "<------>".join(message_templates)
             raise Exception(
-                f'No template matched for message: {json.dumps(message)}')
+                f'No template matched for message:\n{json.dumps(message)}\n\nAvailable templates:\n{json.dumps(new_line_templates)}')
 
         return parsed_message
 

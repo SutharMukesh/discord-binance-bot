@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from module import BinanceUtils, DiscordUtils, MongoUtils, Logger, CommonUtils
 
@@ -65,7 +66,11 @@ def start(data, context):
                 doc['timestamp'] = admin_message['timestamp']
                 doc['msg_id'] = admin_message['id']
                 doc['is_active'] = True
-                inserted_doc = mongo_utils.insert_signals(doc)
+
+                try:
+                    inserted_doc = mongo_utils.insert_signals(doc)
+                except Exception:
+                    logger.warn(f"Error when inserting signal to mongo: {traceback.format_exc()}")
 
                 # Place Buy order
                 binance_res = binance_utils.place_buy_order(doc, oco_targets)
@@ -73,9 +78,13 @@ def start(data, context):
                 logger.info(f"[{binance_res['symbol']}] (BOUGHT) ", json.dumps(binance_res['fills']))
 
                 # Update the binance buy order response.
-                mongo_utils.update_signal(inserted_doc['_id'], {
-                    "binance_res": binance_res
-                })
+                try:
+                    mongo_utils.update_signal(inserted_doc['_id'], {
+                        "binance_res": binance_res
+                    })
+                except Exception:
+                    logger.warn(
+                        f"Error when updating signal for: {inserted_doc['_id']} to mongo: {traceback.format_exc()}")
 
                 if len(binance_res['fills']) > 0:
                     # Order has been placed
@@ -86,9 +95,13 @@ def start(data, context):
                         sell_oco_response = binance_utils.place_oco_sell_orders_for_all_targets(
                             doc, quantity_purchased, oco_targets)
 
-                        mongo_utils.update_signal(inserted_doc['_id'], {
-                            "sell_oco_response": sell_oco_response
-                        })
+                        try:
+                            mongo_utils.update_signal(inserted_doc['_id'], {
+                                "sell_oco_response": sell_oco_response
+                            })
+                        except Exception:
+                            logger.warn(
+                                f"Error when updating signal for: {inserted_doc['_id']} to mongo: {traceback.format_exc()}")
 
                         logger.info(
                             f"[{binance_res['symbol']}] (OCO-PLACED)", json.dumps(sell_oco_response))
@@ -104,12 +117,12 @@ def start(data, context):
                             f"[{binance_res['symbol']}] (SOLD-MARKET)",
                             f"at market price for quantity: {quantity_purchased}, order: {sell_order}")
 
-            except Exception as e:
-                logger.error("🔴 ☠️ (ERROR) ☠️ 🔴", str(e))
+            except Exception:
+                logger.error("🔴 ☠️ (ERROR) ☠️ 🔴", traceback.format_exc())
 
 
 if __name__ == '__main__':
     """
     This is the entrypoint for our script since __name__ is going to be set to __main__ by default.
     """
-    start()
+    start('sampleData', {})

@@ -22,7 +22,7 @@ class MongoUtils(object):
         if not self.enable:
             return
 
-        if self.db:
+        if self.db is not None:
             return self.db
 
         client = MongoClient(self.connection_string)
