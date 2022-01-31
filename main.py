@@ -70,7 +70,7 @@ def start(data, context):
                 try:
                     inserted_doc = mongo_utils.insert_signals(doc)
                 except Exception:
-                    logger.warn(f"Error when inserting signal to mongo: {traceback.format_exc()}")
+                    logger.warn(f"Error when inserting signal to mongo", traceback.format_exc())
 
                 # Place Buy order
                 binance_res = binance_utils.place_buy_order(doc, oco_targets)
@@ -84,7 +84,7 @@ def start(data, context):
                     })
                 except Exception:
                     logger.warn(
-                        f"Error when updating signal for: {inserted_doc['_id']} to mongo: {traceback.format_exc()}")
+                        f"Error when updating signal for: {inserted_doc['_id']} to mongo", traceback.format_exc())
 
                 if len(binance_res['fills']) > 0:
                     # Order has been placed
@@ -101,7 +101,7 @@ def start(data, context):
                             })
                         except Exception:
                             logger.warn(
-                                f"Error when updating signal for: {inserted_doc['_id']} to mongo: {traceback.format_exc()}")
+                                f"Error when updating signal for: {inserted_doc['_id']} to mongo", traceback.format_exc())
 
                         logger.info(
                             f"[{binance_res['symbol']}] (OCO-PLACED)", json.dumps(sell_oco_response))
