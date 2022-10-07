@@ -50,6 +50,13 @@
               "t3": 0.25
             }
           }
+        ],
+        "locations":[
+          {
+            "IN":"INDIA",
+            "US":"USA",
+            "CA":"CANDA"
+          }
         ]
       }
     ],
