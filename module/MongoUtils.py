@@ -12,6 +12,7 @@ class MongoUtils(object):
         self.database_name = 'discord_binance'
         self.signal_collection = 'signals'
         self.db = None
+        self.location = "IN"
 
     def get_db(self, database_name):
         """
