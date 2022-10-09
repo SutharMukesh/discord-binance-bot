@@ -13,6 +13,7 @@ class MongoUtils(object):
         self.signal_collection = 'signals'
         self.db = None
         self.location = "IN"
+        self.timezones = "Asia/Calcutta"
 
     def get_db(self, database_name):
         """
