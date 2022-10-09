@@ -50,6 +50,13 @@
               "t3": 0.25
             }
           }
+        ],
+        "timezones":[
+          {
+            "Asia/Calcutta":"+05:30",
+            "US/Pacific":"-08:00",
+            "Canada/Eastern":"-05:00"
+          }
         ]
       }
     ],
