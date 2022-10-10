@@ -51,6 +51,13 @@
             }
           }
         ],
+        "locations":[
+          {
+            "IN":"INDIA",
+            "US":"USA",
+            "CA":"CANDA"
+          }
+        ],
         "timezones":[
           {
             "Asia/Calcutta":"+05:30",
